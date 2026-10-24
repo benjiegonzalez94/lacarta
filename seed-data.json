@@ -1,0 +1,457 @@
+{
+  "restaurant": {
+    "name": "COWIINGS",
+    "slogan": "Arte en Sabor",
+    "taglines": [
+      "Arte en Sabor",
+      "Alitas, Amigos y Buenos Momentos",
+      "Alitas • Papas Fritas • Hamburguesas"
+    ],
+    "phone": "0986482003",
+    "whatsappPhone": "+593986482003",
+    "whatsappRaw": "593986482003",
+    "currency": "USD",
+    "currencySymbol": "$",
+    "schedule": {
+      "jueves": "17h00 - 22h00",
+      "viernes": "17h00 - 23h00",
+      "sabado": "17h00 - 00h00",
+      "domingo": "17h00 - 22h00"
+    },
+    "delivery": {
+      "enabled": true,
+      "defaultFee": 2.00,
+      "serviceNotice": "Servicio a Domicilio disponible en horario de atención"
+    }
+  },
+  "visualIdentity": {
+    "style": "Dark Mode rústico, callejero premium y apetitoso con acentos dorados y rojos cálidos",
+    "colors": {
+      "background": "#0F0F11",
+      "backgroundCard": "#18181B",
+      "backgroundElevated": "#27272A",
+      "primary": "#E5A93C",
+      "primaryHover": "#CA8A04",
+      "secondary": "#D34E27",
+      "secondaryHover": "#B91C1C",
+      "whatsapp": "#22C55E",
+      "whatsappHover": "#16A34A",
+      "textPrimary": "#FAFAFA",
+      "textSecondary": "#D4D4D8",
+      "textMuted": "#A1A1AA",
+      "border": "#27272A",
+      "accentRed": "#EF4444",
+      "accentYellow": "#FBBF24"
+    },
+    "typography": {
+      "displayFont": "Montserrat, Impact, sans-serif (pesada, condensada, mayúsculas para encabezados con estilo rústico/barbecue)",
+      "bodyFont": "Inter, system-ui, sans-serif (limpia, moderna, alta legibilidad en pantallas oscuras)"
+    },
+    "logo": {
+      "name": "COWIINGS",
+      "elements": [
+        "Cabeza de toro robusta frontal con cuernos afilados",
+        "Rombo central con borde turquesa/cian y fondo rojo",
+        "Texto estilizado COWIINGS en cinta negra frontal",
+        "Hamburguesas a los costados y en la base inferior",
+        "Presas de pollo frito / alitas y papas fritas como rayos de fondo"
+      ],
+      "dominantColors": ["#000000", "#E5A93C", "#C93B2B", "#4DB6AC", "#FFFFFF"]
+    }
+  },
+  "sauces": [
+    {
+      "id": "bbq",
+      "name": "BBQ",
+      "description": "Salsa clásica barbacoa dulce y ahumada",
+      "spicyLevel": 0
+    },
+    {
+      "id": "mostaza-miel",
+      "name": "Mostaza y Miel",
+      "description": "Equilibrio suave, cremoso y agridulce",
+      "spicyLevel": 0
+    },
+    {
+      "id": "queso-parmesano",
+      "name": "Queso Parmesano",
+      "description": "Cremosa con auténtico sabor a queso parmesano sazonado",
+      "spicyLevel": 0
+    },
+    {
+      "id": "carolina",
+      "name": "Carolina",
+      "description": "Salsa picante intensa con notas ahumadas",
+      "spicyLevel": 1,
+      "spicyIcon": "🔥"
+    },
+    {
+      "id": "buffalo",
+      "name": "Buffalo",
+      "description": "La clásica y explosiva salsa picante de alitas",
+      "spicyLevel": 2,
+      "spicyIcon": "🔥🔥"
+    }
+  ],
+  "categories": [
+    {
+      "id": "promociones",
+      "name": "Promociones",
+      "badge": "OFERTA",
+      "description": "Promos especiales por tiempo limitado",
+      "icon": "sparkles"
+    },
+    {
+      "id": "alitas",
+      "name": "Alitas",
+      "badge": "LA ESPECIALIDAD",
+      "description": "Crujientes alitas con porción de papas y salsas artesanales a elección",
+      "icon": "flame"
+    },
+    {
+      "id": "especiales",
+      "name": "Especiales",
+      "badge": "DE LA CASA",
+      "description": "Platos contundentes y combinaciones únicas de Cowiings",
+      "icon": "star"
+    },
+    {
+      "id": "hamburguesas",
+      "name": "Hamburguesas",
+      "badge": "100% RES",
+      "description": "Hamburguesas jugosas preparadas al momento",
+      "icon": "burger"
+    },
+    {
+      "id": "salchipapas",
+      "name": "Salchipapas & Kids",
+      "badge": "FAVORITOS",
+      "description": "Papas doradas con salchichas plumrose, huevo y deditos de pollo",
+      "icon": "fries"
+    },
+    {
+      "id": "adicionales",
+      "name": "Adicionales",
+      "badge": "EXTRAS",
+      "description": "Agrega más sabor, porciones extra y salsas adicionales a tu pedido",
+      "icon": "plus-circle"
+    },
+    {
+      "id": "bebidas",
+      "name": "Bebidas & Batidos",
+      "badge": "REFRESCANTE",
+      "description": "Batidos cremosos, frozens naturales y jugos fríos",
+      "icon": "cup"
+    },
+    {
+      "id": "colas",
+      "name": "Colas & Gaseosas",
+      "badge": "BIEN FRÍAS",
+      "description": "Gaseosas personales y familiares en vidrio y plástico",
+      "icon": "bottle"
+    }
+  ],
+  "items": [
+    {
+      "id": "promo-10-alitas",
+      "categoryId": "promociones",
+      "name": "Promo de Hoy: 10 Alitas",
+      "description": "10 alitas crujientes con porción de papas y 2 sabores/salsas a elegir.",
+      "price": 5.00,
+      "tag": "PROMO DEL DÍA",
+      "isPromo": true,
+      "maxSauces": 2,
+      "includesFries": true,
+      "available": true
+    },
+    {
+      "id": "alitas-6",
+      "categoryId": "alitas",
+      "name": "6 Alitas + Porción de Papas",
+      "description": "6 piezas de alitas doradas y crujientes con porción de papas y 2 salsas a elección.",
+      "price": 5.00,
+      "tag": "INDIVIDUAL",
+      "maxSauces": 2,
+      "includesFries": true,
+      "available": true
+    },
+    {
+      "id": "alitas-12",
+      "categoryId": "alitas",
+      "name": "12 Alitas + Porción de Papas",
+      "description": "12 piezas de alitas doradas con porción de papas y 3 salsas a elección.",
+      "price": 9.00,
+      "tag": "PARA DOS",
+      "maxSauces": 3,
+      "includesFries": true,
+      "available": true
+    },
+    {
+      "id": "alitas-18",
+      "categoryId": "alitas",
+      "name": "18 Alitas + Porción de Papas",
+      "description": "18 piezas de alitas doradas con porción de papas y 4 salsas a elección.",
+      "price": 13.00,
+      "tag": "POPULAR",
+      "maxSauces": 4,
+      "includesFries": true,
+      "available": true
+    },
+    {
+      "id": "alitas-24",
+      "categoryId": "alitas",
+      "name": "24 Alitas + Porción de Papas",
+      "description": "24 piezas de alitas doradas con porción de papas y 5 salsas a elección.",
+      "price": 17.00,
+      "tag": "PARA COMPARTIR",
+      "maxSauces": 5,
+      "includesFries": true,
+      "available": true
+    },
+    {
+      "id": "alitas-30",
+      "categoryId": "alitas",
+      "name": "30 Alitas + Porción de Papas",
+      "description": "30 piezas de alitas doradas para grupos con porción de papas y 5 salsas a elección.",
+      "price": 22.00,
+      "tag": "SUPER COMBO",
+      "maxSauces": 5,
+      "includesFries": true,
+      "available": true
+    },
+    {
+      "id": "papipollo",
+      "categoryId": "especiales",
+      "name": "Papipollo",
+      "description": "Presa de pollo broaster crujiente, generosa porción de papas fritas, bañada en salsa cheddar y queso rallado.",
+      "price": 3.00,
+      "tag": "CLÁSICO",
+      "available": true
+    },
+    {
+      "id": "cowiings-premium",
+      "categoryId": "especiales",
+      "name": "Cowiings Premium",
+      "description": "Chorizo paisa parrillero, panceta ahumada crujiente, pico de gallo fresco, crema de queso de la casa y cama de papas fritas.",
+      "price": 5.00,
+      "tag": "ESPECIALIDAD",
+      "available": true
+    },
+    {
+      "id": "explosion-cowiings",
+      "categoryId": "especiales",
+      "name": "Explosión Cowiings",
+      "description": "Chorizo paisa, jugosa carne picada salteada, huevo frito montado, salsa cheddar fundida, queso rallado y base de papas.",
+      "price": 4.00,
+      "tag": "RECOMENDADO",
+      "available": true
+    },
+    {
+      "id": "burger-clasica",
+      "categoryId": "hamburguesas",
+      "name": "Hamburguesa Clásica",
+      "description": "Carne de res parrillera, tomate fresco, lechuga crocante y salsa mil islas artesanal.",
+      "price": 1.50,
+      "tag": "ECONÓMICA",
+      "available": true
+    },
+    {
+      "id": "burger-tipo-1",
+      "categoryId": "hamburguesas",
+      "name": "Hamburguesa Tipo 1",
+      "description": "Carne de res, tomate fresco, lechuga crocante, salsa mil islas, abundante queso cheddar fundido y huevo frito.",
+      "price": 2.00,
+      "tag": "LA FAVORITA",
+      "available": true
+    },
+    {
+      "id": "burger-tipo-2",
+      "categoryId": "hamburguesas",
+      "name": "Hamburguesa Tipo 2",
+      "description": "Carne de res, tomate, lechuga, salsa mil islas, queso cheddar, huevo frito y porción de papas fritas crujientes.",
+      "price": 2.50,
+      "tag": "COMBO COMPLETO",
+      "available": true
+    },
+    {
+      "id": "salchipapa-tipo-1",
+      "categoryId": "salchipapas",
+      "name": "Salchipapa Tipo 1",
+      "description": "Papas fritas doradas combinadas con rodajas de salchicha Plumrose, bañadas en salsa cheddar y queso rallado.",
+      "price": 2.00,
+      "tag": "TRADICIONAL",
+      "available": true
+    },
+    {
+      "id": "salchipapa-tipo-2",
+      "categoryId": "salchipapas",
+      "name": "Salchipapa Tipo 2",
+      "description": "Papas fritas con salchichas Plumrose, huevo frito a la plancha, bañadas con salsa cheddar y queso rallado.",
+      "price": 2.50,
+      "tag": "CON HUEVO",
+      "available": true
+    },
+    {
+      "id": "salchipapa-kids",
+      "categoryId": "salchipapas",
+      "name": "Salchipapa Kids",
+      "description": "5 deditos de pechuga de pollo apanados y crujientes, porción de papas fritas, salsa cheddar y queso rallado.",
+      "price": 2.75,
+      "tag": "INFANTIL",
+      "available": true
+    },
+    {
+      "id": "adic-salsa",
+      "categoryId": "adicionales",
+      "name": "Salsa Adicional (Cheddar / Ranch / Queso Crema)",
+      "description": "Porción extra de salsa a tu elección: Salsa Cheddar, Ranch o Queso Crema.",
+      "price": 0.50,
+      "options": ["Salsa Cheddar", "Salsa Ranch", "Queso Crema"],
+      "available": true
+    },
+    {
+      "id": "adic-huevo",
+      "categoryId": "adicionales",
+      "name": "Huevo Frito Adicional",
+      "description": "Huevo frito a la plancha para sumar a tu plato o hamburguesa favorita.",
+      "price": 0.50,
+      "available": true
+    },
+    {
+      "id": "adic-salchichas",
+      "categoryId": "adicionales",
+      "name": "Porción Adicional de Salchichas",
+      "description": "Porción extra de salchichas Plumrose doradas.",
+      "price": 0.75,
+      "available": true
+    },
+    {
+      "id": "adic-carne-burger",
+      "categoryId": "adicionales",
+      "name": "Carne de Hamburguesa Extra",
+      "description": "Patty de carne de res adicional para hacer tu hamburguesa doble.",
+      "price": 0.75,
+      "available": true
+    },
+    {
+      "id": "adic-papas-cheddar-queso",
+      "categoryId": "adicionales",
+      "name": "Porción de Papas con Salsa Cheddar y Queso Rallado",
+      "description": "Papas fritas crujientes bañadas en generosa salsa cheddar caliente y queso rallado por encima.",
+      "price": 1.50,
+      "tag": "FAVORITO",
+      "available": true
+    },
+    {
+      "id": "batido-oreo",
+      "categoryId": "bebidas",
+      "name": "Batido de Oreo",
+      "description": "Batido cremoso elaborado con galletas Oreo, leche y hielo frappé.",
+      "price": 2.00,
+      "type": "batido",
+      "available": true
+    },
+    {
+      "id": "batido-frutilla",
+      "categoryId": "bebidas",
+      "name": "Batido de Frutilla",
+      "description": "Batido espeso y cremoso de frutillas seleccionadas.",
+      "price": 2.00,
+      "type": "batido",
+      "available": true
+    },
+    {
+      "id": "batido-mora",
+      "categoryId": "bebidas",
+      "name": "Batido de Mora",
+      "description": "Batido cremoso tradicional con pulpa de mora fresca.",
+      "price": 2.00,
+      "type": "batido",
+      "available": true
+    },
+    {
+      "id": "batido-aguacate",
+      "categoryId": "bebidas",
+      "name": "Batido de Aguacate",
+      "description": "Especialidad cremosa y suave elaborada con aguacate fresco.",
+      "price": 2.00,
+      "type": "batido",
+      "available": true
+    },
+    {
+      "id": "batido-durazno",
+      "categoryId": "bebidas",
+      "name": "Batido de Durazno",
+      "description": "Batido cremoso de durazno dulce y refrescante.",
+      "price": 2.00,
+      "type": "batido",
+      "available": true
+    },
+    {
+      "id": "frozen-maracuya",
+      "categoryId": "bebidas",
+      "name": "Frozen de Maracuyá",
+      "description": "Granizado refrescante frappé de maracuyá ácido y frutal.",
+      "price": 1.75,
+      "type": "frozen",
+      "available": true
+    },
+    {
+      "id": "frozen-mora",
+      "categoryId": "bebidas",
+      "name": "Frozen de Mora",
+      "description": "Granizado refrescante frappé de mora silvestre.",
+      "price": 1.75,
+      "type": "frozen",
+      "available": true
+    },
+    {
+      "id": "fuze-tea-vidrio",
+      "categoryId": "bebidas",
+      "name": "Fuze-Tea de Vidrio",
+      "description": "Té helado sabor limón o durazno en botella de vidrio personal bien fría.",
+      "price": 0.50,
+      "type": "te_helado",
+      "available": true
+    },
+    {
+      "id": "cola-personal-vidrio",
+      "categoryId": "colas",
+      "name": "Personal de Vidrio",
+      "description": "Gaseosa personal retornable de vidrio bien fría.",
+      "price": 0.50,
+      "flavors": ["Coca-Cola", "Sprite", "Fanta", "Inca Kola", "Fioravanti"],
+      "available": true
+    },
+    {
+      "id": "cola-personal-plastico",
+      "categoryId": "colas",
+      "name": "Personal de Plástico",
+      "description": "Gaseosa personal descartable de plástico.",
+      "price": 0.50,
+      "flavors": ["Coca-Cola", "Sprite", "Fanta", "Inca Kola"],
+      "available": true
+    },
+    {
+      "id": "cola-litro-vidrio",
+      "categoryId": "colas",
+      "name": "Litro de Vidrio",
+      "description": "Gaseosa de 1 litro en botella retornable de vidrio.",
+      "price": 1.25,
+      "flavors": ["Coca-Cola", "Sprite", "Fanta", "Inca Kola", "Fioravanti"],
+      "available": true
+    },
+    {
+      "id": "cola-litro-plastico",
+      "categoryId": "colas",
+      "name": "Litro de Plástico",
+      "description": "Gaseosa de 1 litro en botella plástica no retornable.",
+      "price": 1.50,
+      "flavors": ["Coca-Cola", "Sprite", "Inca Kola", "Fanta"],
+      "available": true
+    }
+  ],
+  "orderFlowTemplate": {
+    "whatsappMessageFormat": "🍔 NUEVO PEDIDO - {restaurantName}\n-------------------------------\nTipo: {orderType}\nCliente: {customerName}\nTeléfono: {customerPhone}\nDirección: {deliveryAddress}\nReferencia: {referenceNotes}\n-------------------------------\nDETALLE DEL PEDIDO:\n{itemsList}\n-------------------------------\nSubtotal: ${subtotal}\nCosto de envío: ${deliveryFee}\nTOTAL: ${total}\n-------------------------------\nMétodo de pago: Por confirmar"
+  }
+}
