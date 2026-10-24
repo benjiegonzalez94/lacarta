@@ -171,3 +171,32 @@ Además:
 - ⚠️ Algunos campos **no provienen de las referencias** y deben confirmarse con el restaurante antes de usarse como datos reales:
   `delivery.defaultFee`, los códigos hex de `visualIdentity.colors`, `typography`, las descripciones de las salsas,
   los adornos añadidos a descripciones de productos, los `tag`/`badge` y `orderFlowTemplate`.
+
+---
+
+## 9. Flujo de Trabajo Git & Despliegue (Gitflow + Coolify)
+
+### 9.1 Ramas Gitflow
+- **`main`**: Rama de **producción**. Todo push o merge a `main` activa el despliegue automático hacia Coolify (producción).
+- **`develop`**: Rama de **integración continua** para desarrollo activo.
+- **`feature/<nombre>`**: Ramas temporales de desarrollo (creadas desde `develop` y mergeadas a `develop` vía Pull Request o rebase limpio).
+- **`hotfix/<nombre>`**: Correcciones críticas urgentes directo a `main` y sincronizadas a `develop`.
+
+### 9.2 Despliegue en Coolify / VPS
+- **Build Target**: Dockerfile multi-stage (`output: 'standalone'` en Next.js) para consumo mínimo de RAM y arranque ultra-rápido.
+- **Autodeploy**: Configurado vía GitHub App en Coolify o mediante Webhook en `main`.
+- **Variables de Entorno en Coolify**:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `NODE_ENV=production`
+  - `PORT=3000`
+
+---
+
+## 10. Automatización de Base de Datos vía Supabase MCP
+
+- Integración vía `@supabase/mcp-server-supabase` en `~/.gemini/config/mcp_config.json`.
+- Permite la ejecución de queries (`execute_sql`), migraciones (`apply_migration`), inspección de tablas (`list_tables`) y generación automática de tipos TypeScript (`generate_typescript_types`) directamente desde el agente.
+- Requiere `SUPABASE_ACCESS_TOKEN` (Personal Access Token del dashboard) y el `project-ref` correspondiente.
+
