@@ -31,9 +31,24 @@ export function RestaurantHeader({
 }: RestaurantHeaderProps) {
   return (
     <header className="relative overflow-hidden border-b border-zinc-800/80 bg-gradient-to-b from-[#1C1410] via-[#131215] to-[#0F0F11]">
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-56 w-96 -translate-x-1/2 rounded-full bg-[#E5A93C]/10 blur-3xl" />
+      {branding.bannerUrl ? (
+        <div className="pointer-events-none absolute inset-0 opacity-20">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={branding.bannerUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-[#0F0F11]" />
+        </div>
+      ) : null}
 
-      <div className="mx-auto max-w-3xl px-4 pt-6 pb-5">
+      <div
+        className="pointer-events-none absolute -top-24 left-1/2 h-56 w-96 -translate-x-1/2 rounded-full opacity-15 blur-3xl"
+        style={{ backgroundColor: branding.primaryColor }}
+      />
+
+      <div className="relative mx-auto max-w-3xl px-4 pt-6 pb-5">
         {resolvedTable ? (
           <div className="mb-4 flex items-center justify-between rounded-xl border border-[#E5A93C]/40 bg-[#E5A93C]/10 px-3.5 py-2.5">
             <div className="flex items-center gap-2.5">
@@ -64,7 +79,10 @@ export function RestaurantHeader({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <Flame className="h-8 w-8 text-[#E5A93C]" />
+                <Flame
+                  className="h-8 w-8"
+                  style={{ color: branding.primaryColor }}
+                />
               )}
             </div>
             <div>
@@ -81,8 +99,11 @@ export function RestaurantHeader({
                   {schedule.statusLabel}
                 </Badge>
               </div>
-              <p className="mt-0.5 text-sm font-medium text-[#E5A93C]">
-                {branding.slogan} • Alitas, Papas Fritas & Hamburguesas
+              <p
+                className="mt-0.5 text-sm font-medium"
+                style={{ color: branding.primaryColor }}
+              >
+                {branding.slogan}
               </p>
             </div>
           </div>
@@ -90,17 +111,21 @@ export function RestaurantHeader({
 
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800/90 bg-[#18181B]/90 px-3 py-2 text-xs text-zinc-300">
-            <Clock className="h-4 w-4 shrink-0 text-[#E5A93C]" />
+            <Clock
+              className="h-4 w-4 shrink-0"
+              style={{ color: branding.primaryColor }}
+            />
             <div>
-              <span className="font-semibold text-zinc-100">
-                Jue a Dom desde 17h00:
-              </span>{" "}
+              <span className="font-semibold text-zinc-100">Horario:</span>{" "}
               <span>{schedule.notice}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800/90 bg-[#18181B]/90 px-3 py-2 text-xs text-zinc-300">
-            <Truck className="h-4 w-4 shrink-0 text-[#E5A93C]" />
+            <Truck
+              className="h-4 w-4 shrink-0"
+              style={{ color: branding.primaryColor }}
+            />
             <div>
               <span className="font-semibold text-zinc-100">
                 Servicio a Domicilio:
@@ -116,9 +141,11 @@ export function RestaurantHeader({
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
           <span className="inline-flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-[#E5A93C]" />
-            Salsas artesanales: BBQ, Mostaza y Miel, Parmesano, Carolina 🔥,
-            Buffalo 🔥🔥
+            <Sparkles
+              className="h-3.5 w-3.5"
+              style={{ color: branding.primaryColor }}
+            />
+            Personaliza tus platos y envía tu pedido directo por WhatsApp
           </span>
           <span className="inline-flex items-center gap-1 text-zinc-300">
             <Phone className="h-3.5 w-3.5 text-emerald-400" />

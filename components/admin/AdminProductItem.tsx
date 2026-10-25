@@ -5,6 +5,7 @@ import {
   Check,
   Image as ImageIcon,
   Pencil,
+  SlidersHorizontal,
   Trash2,
   Upload,
   X,
@@ -16,18 +17,30 @@ import {
 } from "@/app/(dashboard)/admin/actions";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils/currency";
-import type { CategoryRow, ProductRow } from "@/types/domain";
+import type {
+  CategoryRow,
+  ModifierGroupWithOptions,
+  ProductRow,
+} from "@/types/domain";
 
 export interface AdminProductItemProps {
   product: ProductRow;
   categories: CategoryRow[];
+  modifierGroups: ModifierGroupWithOptions[];
+  assignedGroupIds: string[];
 }
 
 export function AdminProductItem({
   product,
   categories,
+  modifierGroups,
+  assignedGroupIds,
 }: AdminProductItemProps) {
   const [isEditing, setIsEditing] = useState(false);
+
+  const assignedGroups = modifierGroups.filter((group) =>
+    assignedGroupIds.includes(group.id)
+  );
 
   return (
     <div className="py-3.5">
@@ -56,6 +69,15 @@ export function AdminProductItem({
               <Badge variant={product.is_available ? "success" : "danger"}>
                 {product.is_available ? "Disponible" : "Agotado / Oculto"}
               </Badge>
+              {assignedGroups.map((group) => (
+                <span
+                  key={group.id}
+                  className="inline-flex items-center gap-1 rounded-md border border-[#E5A93C]/30 bg-[#E5A93C]/10 px-2 py-0.5 text-[11px] font-semibold text-[#E5A93C]"
+                >
+                  <SlidersHorizontal className="h-2.5 w-2.5" />
+                  {group.name}
+                </span>
+              ))}
             </div>
             {product.description ? (
               <p className="mt-0.5 line-clamp-2 text-xs text-zinc-400">
@@ -133,6 +155,7 @@ export function AdminProductItem({
             name="isAvailable"
             value={product.is_available ? "true" : "false"}
           />
+          <input type="hidden" name="syncModifiers" value="true" />
 
           <div>
             <label
@@ -259,6 +282,36 @@ export function AdminProductItem({
               className="w-full rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs text-zinc-300 file:mr-2 file:rounded-lg file:border-0 file:bg-[#E5A93C] file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-zinc-950"
             />
           </div>
+
+          {modifierGroups.length > 0 ? (
+            <div className="rounded-xl border border-zinc-800 bg-[#202024] p-3 sm:col-span-2">
+              <p className="mb-2 text-xs font-bold text-zinc-200">
+                Grupos de Modificadores / Variantes (Salsas, Sabores, Extras)
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+                {modifierGroups.map((group) => (
+                  <label
+                    key={group.id}
+                    htmlFor={`mod-group-${product.id}-${group.id}`}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-700/70 bg-[#18181B] px-2.5 py-2 text-xs text-zinc-200 hover:border-[#E5A93C]"
+                  >
+                    <input
+                      id={`mod-group-${product.id}-${group.id}`}
+                      type="checkbox"
+                      name="modifierGroupIds"
+                      value={group.id}
+                      defaultChecked={assignedGroupIds.includes(group.id)}
+                      className="h-3.5 w-3.5 rounded accent-[#E5A93C]"
+                    />
+                    <span className="truncate font-medium">{group.name}</span>
+                    <span className="ml-auto text-[10px] text-zinc-400">
+                      ({group.min_select}-{group.max_select})
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="flex justify-end gap-2 sm:col-span-2">
             <button

@@ -53,6 +53,11 @@ export const TenantSettingsSchema = z.object({
     .trim()
     .min(1, "El nombre del restaurante es obligatorio.")
     .max(120, "Máximo 120 caracteres."),
+  slogan: z
+    .string()
+    .trim()
+    .max(120, "Máximo 120 caracteres.")
+    .default("Arte en Sabor"),
   phone: z
     .string()
     .trim()
@@ -64,10 +69,27 @@ export const TenantSettingsSchema = z.object({
     .number()
     .min(0, "El costo de envío no puede ser negativo.")
     .max(100, "Costo de envío fuera de rango."),
+  primaryColor: z
+    .string()
+    .trim()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Color primario hex inválido.")
+    .default("#E5A93C"),
+  secondaryColor: z
+    .string()
+    .trim()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Color secundario hex inválido.")
+    .default("#D34E27"),
   logoUrl: z
     .string()
     .trim()
     .url("URL de logo inválida.")
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v && v.length > 0 ? v : null)),
+  bannerUrl: z
+    .string()
+    .trim()
+    .url("URL de banner inválida.")
     .optional()
     .or(z.literal(""))
     .transform((v) => (v && v.length > 0 ? v : null)),
@@ -90,4 +112,36 @@ export const OrderStatusUpdateSchema = z.object({
     "completed",
     "cancelled",
   ]),
+});
+
+export const ModifierGroupCreateSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, "El nombre del grupo es obligatorio.")
+      .max(80, "Máximo 80 caracteres."),
+    minSelect: z.coerce.number().int().min(0).max(20).default(0),
+    maxSelect: z.coerce.number().int().min(1).max(20).default(1),
+  })
+  .refine((d) => d.maxSelect >= d.minSelect, {
+    message: "El máximo debe ser mayor o igual al mínimo.",
+    path: ["maxSelect"],
+  });
+
+export const ModifierOptionCreateSchema = z.object({
+  groupId: UuidSchema,
+  name: z
+    .string()
+    .trim()
+    .min(1, "El nombre de la opción es obligatorio.")
+    .max(80, "Máximo 80 caracteres."),
+  priceDelta: z.coerce.number().min(0).max(999.99).default(0),
+});
+
+export const BusinessHourUpdateSchema = z.object({
+  dayOfWeek: z.coerce.number().int().min(0).max(6),
+  openTime: z.string().regex(/^\d{2}:\d{2}$/),
+  closeTime: z.string().regex(/^\d{2}:\d{2}$/),
+  isOpen: z.boolean(),
 });

@@ -16,11 +16,20 @@ export function CartItemRow({
   onRemove,
 }: CartItemRowProps) {
   const details: string[] = [];
-  if (item.selectedSauces.length > 0) {
-    details.push(`Salsas: ${item.selectedSauces.join(", ")}`);
-  }
-  if (item.selectedOption) {
-    details.push(`Opción: ${item.selectedOption}`);
+  if (item.selectedModifiers && item.selectedModifiers.length > 0) {
+    const names = item.selectedModifiers.map((m) =>
+      m.priceDelta > 0
+        ? `${m.optionName} (+${formatCurrency(m.priceDelta)})`
+        : m.optionName
+    );
+    details.push(names.join(", "));
+  } else {
+    if (item.selectedSauces && item.selectedSauces.length > 0) {
+      details.push(`Salsas: ${item.selectedSauces.join(", ")}`);
+    }
+    if (item.selectedOption) {
+      details.push(`Opción: ${item.selectedOption}`);
+    }
   }
   if (item.customNotes) {
     details.push(`Nota: ${item.customNotes}`);

@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_hours: {
+        Row: {
+          close_time: string
+          day_of_week: number
+          id: string
+          is_open: boolean
+          open_time: string
+          tenant_id: string
+        }
+        Insert: {
+          close_time?: string
+          day_of_week: number
+          id?: string
+          is_open?: boolean
+          open_time?: string
+          tenant_id: string
+        }
+        Update: {
+          close_time?: string
+          day_of_week?: number
+          id?: string
+          is_open?: boolean
+          open_time?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_hours_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -39,6 +74,92 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modifier_groups: {
+        Row: {
+          created_at: string
+          id: string
+          max_select: number
+          min_select: number
+          name: string
+          sort_order: number
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_select?: number
+          min_select?: number
+          name: string
+          sort_order?: number
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_select?: number
+          min_select?: number
+          name?: string
+          sort_order?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modifier_groups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modifier_options: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          is_available: boolean
+          name: string
+          price_delta: number
+          sort_order: number
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          is_available?: boolean
+          name: string
+          price_delta?: number
+          sort_order?: number
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          is_available?: boolean
+          name?: string
+          price_delta?: number
+          sort_order?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modifier_options_group_id_tenant_id_fkey"
+            columns: ["group_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "modifier_groups"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "modifier_options_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -163,6 +284,49 @@ export type Database = {
           },
         ]
       }
+      product_modifier_groups: {
+        Row: {
+          group_id: string
+          product_id: string
+          sort_order: number
+          tenant_id: string
+        }
+        Insert: {
+          group_id: string
+          product_id: string
+          sort_order?: number
+          tenant_id: string
+        }
+        Update: {
+          group_id?: string
+          product_id?: string
+          sort_order?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_modifier_groups_group_id_tenant_id_fkey"
+            columns: ["group_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "modifier_groups"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "product_modifier_groups_product_id_tenant_id_fkey"
+            columns: ["product_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "tenant_id"]
+          },
+          {
+            foreignKeyName: "product_modifier_groups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category_id: string
@@ -251,6 +415,7 @@ export type Database = {
       }
       tenants: {
         Row: {
+          banner_url: string | null
           created_at: string
           delivery_fee: number
           id: string
@@ -258,9 +423,13 @@ export type Database = {
           name: string
           owner_id: string | null
           phone: string
+          primary_color: string
+          secondary_color: string
+          slogan: string
           slug: string
         }
         Insert: {
+          banner_url?: string | null
           created_at?: string
           delivery_fee?: number
           id?: string
@@ -268,9 +437,13 @@ export type Database = {
           name: string
           owner_id?: string | null
           phone: string
+          primary_color?: string
+          secondary_color?: string
+          slogan?: string
           slug: string
         }
         Update: {
+          banner_url?: string | null
           created_at?: string
           delivery_fee?: number
           id?: string
@@ -278,6 +451,9 @@ export type Database = {
           name?: string
           owner_id?: string | null
           phone?: string
+          primary_color?: string
+          secondary_color?: string
+          slogan?: string
           slug?: string
         }
         Relationships: []

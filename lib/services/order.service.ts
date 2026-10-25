@@ -61,24 +61,45 @@ export async function placePublicOrder(
   }
 
   const productIds = Array.from(new Set(input.items.map((i) => i.product_id)));
-  const { data: products, error: productsError } = await supabase
-    .from("products")
-    .select("id, name, price, is_available")
-    .eq("tenant_id", tenant.id)
-    .in("id", productIds);
+  const allOptionIds = Array.from(
+    new Set(input.items.flatMap((i) => i.option_ids ?? []))
+  );
+
+  const [{ data: products, error: productsError }, { data: modifierOptions }] =
+    await Promise.all([
+      supabase
+        .from("products")
+        .select("id, name, price, is_available")
+        .eq("tenant_id", tenant.id)
+        .in("id", productIds),
+      allOptionIds.length > 0
+        ? supabase
+            .from("modifier_options")
+            .select("id, name, price_delta, is_available")
+            .eq("tenant_id", tenant.id)
+            .in("id", allOptionIds)
+        : Promise.resolve({ data: [] }),
+    ]);
 
   if (productsError || !products) {
     throw new Error("PRODUCT_LOOKUP_FAILED");
   }
 
   const productMap = new Map(products.map((p) => [p.id, p]));
+  const optionMap = new Map((modifierOptions ?? []).map((o) => [o.id, o]));
 
   const whatsappLines: WhatsAppOrderLine[] = input.items.map((item) => {
     const product = productMap.get(item.product_id);
     if (!product || !product.is_available) {
       throw new Error("PRODUCT_UNAVAILABLE");
     }
-    const unitPrice = Number(product.price);
+
+    const optionsDelta = (item.option_ids ?? []).reduce((sum, optId) => {
+      const opt = optionMap.get(optId);
+      return opt && opt.is_available ? sum + Number(opt.price_delta) : sum;
+    }, 0);
+
+    const unitPrice = roundMoney(Number(product.price) + optionsDelta);
     const lineTotal = roundMoney(unitPrice * item.quantity);
     return {
       productName: product.name,

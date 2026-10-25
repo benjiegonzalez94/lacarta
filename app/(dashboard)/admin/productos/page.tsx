@@ -5,6 +5,7 @@ import {
   createProductAction,
   deleteCategoryAction,
 } from "@/app/(dashboard)/admin/actions";
+import { AdminModifierGroupsSection } from "@/components/admin/AdminModifierGroupsSection";
 import { AdminProductItem } from "@/components/admin/AdminProductItem";
 import { Badge } from "@/components/ui/Badge";
 import {
@@ -24,6 +25,13 @@ async function AdminProductsContent() {
   if (!tenant) return null;
 
   const data = await getAdminDashboardData(supabase, tenant);
+
+  const productGroupIdsMap = new Map<string, string[]>();
+  for (const link of data.productModifierLinks) {
+    const list = productGroupIdsMap.get(link.product_id) ?? [];
+    list.push(link.group_id);
+    productGroupIdsMap.set(link.product_id, list);
+  }
 
   return (
     <div className="space-y-8">
@@ -203,6 +211,8 @@ async function AdminProductsContent() {
         </div>
       </div>
 
+      <AdminModifierGroupsSection modifierGroups={data.modifierGroups} />
+
       <div className="space-y-6">
         {data.categories.map((category) => {
           const categoryProducts = data.products.filter(
@@ -248,6 +258,8 @@ async function AdminProductsContent() {
                     key={product.id}
                     product={product}
                     categories={data.categories}
+                    modifierGroups={data.modifierGroups}
+                    assignedGroupIds={productGroupIdsMap.get(product.id) ?? []}
                   />
                 ))}
               </div>

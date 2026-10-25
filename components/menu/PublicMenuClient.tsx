@@ -7,11 +7,13 @@ import { FloatingCartBar } from "@/components/menu/FloatingCartBar";
 import { ProductCard } from "@/components/menu/ProductCard";
 import { ProductCustomizeModal } from "@/components/menu/ProductCustomizeModal";
 import { Badge } from "@/components/ui/Badge";
+import { roundMoney } from "@/lib/utils/currency";
 import type {
   CartItem,
   EnrichedProduct,
   PublicMenuBundle,
   ResolvedTable,
+  SelectedModifierChoice,
 } from "@/types/domain";
 
 export interface PublicMenuClientProps {
@@ -43,12 +45,14 @@ function subscribeNoop() {
 
 function buildCartItemSignature(params: {
   productId: string;
-  selectedSauces: string[];
-  selectedOption: string | null;
+  selectedModifiers: SelectedModifierChoice[];
   customNotes: string;
 }): string {
-  const saucesKey = [...params.selectedSauces].sort().join(",");
-  return `${params.productId}::${saucesKey}::${params.selectedOption ?? ""}::${params.customNotes}`;
+  const modsKey = params.selectedModifiers
+    .map((m) => m.optionId)
+    .sort()
+    .join(",");
+  return `${params.productId}::${modsKey}::${params.customNotes}`;
 }
 
 export function PublicMenuClient({
@@ -81,10 +85,7 @@ export function PublicMenuClient({
     }
   }, [cart, storageKey]);
 
-  const activeCart = useMemo(
-    () => (isClient ? cart : []),
-    [cart, isClient]
-  );
+  const activeCart = useMemo(() => (isClient ? cart : []), [cart, isClient]);
 
   const filteredCategories = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -130,12 +131,7 @@ export function PublicMenuClient({
   }
 
   function handleSelectProduct(product: EnrichedProduct) {
-    const requiresModal =
-      Boolean(product.meta.maxSauces && product.meta.maxSauces > 0) ||
-      Boolean(product.meta.options && product.meta.options.length > 0) ||
-      Boolean(product.meta.flavors && product.meta.flavors.length > 0);
-
-    if (requiresModal) {
+    if (product.modifierGroups.length > 0) {
       setCustomizingProduct(product);
       return;
     }
@@ -143,8 +139,7 @@ export function PublicMenuClient({
     handleConfirmAdd({
       product,
       quantity: 1,
-      selectedSauces: [],
-      selectedOption: null,
+      selectedModifiers: [],
       customNotes: "",
     });
   }
@@ -152,16 +147,20 @@ export function PublicMenuClient({
   function handleConfirmAdd(params: {
     product: EnrichedProduct;
     quantity: number;
-    selectedSauces: string[];
-    selectedOption: string | null;
+    selectedModifiers: SelectedModifierChoice[];
     customNotes: string;
   }) {
     const cartItemId = buildCartItemSignature({
       productId: params.product.id,
-      selectedSauces: params.selectedSauces,
-      selectedOption: params.selectedOption,
+      selectedModifiers: params.selectedModifiers,
       customNotes: params.customNotes,
     });
+
+    const modsDelta = params.selectedModifiers.reduce(
+      (sum, m) => sum + m.priceDelta,
+      0
+    );
+    const unitPrice = roundMoney(params.product.price + modsDelta);
 
     setCart((prev) => {
       const existingIndex = prev.findIndex(
@@ -184,10 +183,12 @@ export function PublicMenuClient({
           cartItemId,
           productId: params.product.id,
           name: params.product.name,
-          unitPrice: params.product.price,
+          basePrice: params.product.price,
+          unitPrice,
           quantity: params.quantity,
-          selectedSauces: params.selectedSauces,
-          selectedOption: params.selectedOption,
+          selectedModifiers: params.selectedModifiers,
+          selectedSauces: [],
+          selectedOption: null,
           customNotes: params.customNotes,
         },
       ];
@@ -292,7 +293,6 @@ export function PublicMenuClient({
       {customizingProduct ? (
         <ProductCustomizeModal
           product={customizingProduct}
-          sauces={menu.sauces}
           onClose={() => setCustomizingProduct(null)}
           onConfirmAdd={handleConfirmAdd}
         />
@@ -301,7 +301,7 @@ export function PublicMenuClient({
       {isCartOpen ? (
         <CartCheckoutDrawer
           tenant={menu.tenant}
-          cart={cart}
+          cart={activeCart}
           resolvedTable={resolvedTable}
           onClose={() => setIsCartOpen(false)}
           onUpdateQty={handleUpdateCartQty}

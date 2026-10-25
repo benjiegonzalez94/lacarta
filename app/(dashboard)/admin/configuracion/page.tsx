@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Plus, QrCode } from "lucide-react";
+import { Palette, Plus, QrCode } from "lucide-react";
 import {
   createTableAction,
   updateTenantSettingsAction,
@@ -26,67 +26,133 @@ async function AdminConfigContent() {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
       <section className="rounded-2xl border border-zinc-800 bg-[#18181B] p-6">
-        <h1 className="text-base font-black uppercase tracking-wider text-zinc-100">
-          Datos del Restaurante y WhatsApp
-        </h1>
-        <p className="mt-1 text-xs text-zinc-400">
-          Configura el nombre comercial, el número receptor de pedidos en
-          formato E.164 y la tarifa de envío a domicilio.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-base font-black uppercase tracking-wider text-zinc-100">
+              Datos del Negocio, WhatsApp e Identidad Visual
+            </h1>
+            <p className="mt-1 text-xs text-zinc-400">
+              Configura el nombre comercial, eslogan, colores de marca, WhatsApp
+              receptor (E.164) y tarifa de envío.
+            </p>
+          </div>
+          <Palette className="h-6 w-6 text-[#E5A93C]" />
+        </div>
 
         <form action={updateTenantSettingsAction} className="mt-5 space-y-4">
-          <div>
-            <label
-              htmlFor="tenant-name-input"
-              className="mb-1 block text-xs font-semibold text-zinc-300"
-            >
-              Nombre del Restaurante
-            </label>
-            <input
-              id="tenant-name-input"
-              name="name"
-              type="text"
-              required
-              defaultValue={tenant.name}
-              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="tenant-name-input"
+                className="mb-1 block text-xs font-semibold text-zinc-300"
+              >
+                Nombre del Restaurante
+              </label>
+              <input
+                id="tenant-name-input"
+                name="name"
+                type="text"
+                required
+                defaultValue={tenant.name}
+                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="tenant-slogan-input"
+                className="mb-1 block text-xs font-semibold text-zinc-300"
+              >
+                Eslogan / Subtítulo comercial
+              </label>
+              <input
+                id="tenant-slogan-input"
+                name="slogan"
+                type="text"
+                defaultValue={tenant.slogan ?? ""}
+                placeholder="Ej: Alitas, Costillas & Hamburguesas"
+                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100"
+              />
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="tenant-phone-input"
-              className="mb-1 block text-xs font-semibold text-zinc-300"
-            >
-              WhatsApp receptor (Formato E.164)
-            </label>
-            <input
-              id="tenant-phone-input"
-              name="phone"
-              type="text"
-              required
-              defaultValue={tenant.phone}
-              placeholder="+593986482003"
-              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="tenant-phone-input"
+                className="mb-1 block text-xs font-semibold text-zinc-300"
+              >
+                WhatsApp receptor (Formato E.164)
+              </label>
+              <input
+                id="tenant-phone-input"
+                name="phone"
+                type="text"
+                required
+                defaultValue={tenant.phone}
+                placeholder="+593986482003"
+                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="tenant-delivery-fee-input"
+                className="mb-1 block text-xs font-semibold text-zinc-300"
+              >
+                Costo de envío a domicilio (USD)
+              </label>
+              <input
+                id="tenant-delivery-fee-input"
+                name="deliveryFee"
+                type="number"
+                step="0.01"
+                min="0"
+                required
+                defaultValue={Number(tenant.delivery_fee)}
+                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100"
+              />
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="tenant-delivery-fee-input"
-              className="mb-1 block text-xs font-semibold text-zinc-300"
-            >
-              Costo de envío a domicilio (USD)
-            </label>
-            <input
-              id="tenant-delivery-fee-input"
-              name="deliveryFee"
-              type="number"
-              step="0.01"
-              min="0"
-              required
-              defaultValue={Number(tenant.delivery_fee)}
-              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="tenant-primary-color-input"
+                className="mb-1 block text-xs font-semibold text-zinc-300"
+              >
+                Color Primario (Hexadecimal)
+              </label>
+              <input
+                id="tenant-primary-color-input"
+                name="primaryColor"
+                type="text"
+                required
+                pattern="^#[0-9A-Fa-f]{6}$"
+                defaultValue={tenant.primary_color || "#E5A93C"}
+                placeholder="#E5A93C"
+                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 font-mono text-sm text-zinc-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="tenant-secondary-color-input"
+                className="mb-1 block text-xs font-semibold text-zinc-300"
+              >
+                Color Secundario (Hexadecimal)
+              </label>
+              <input
+                id="tenant-secondary-color-input"
+                name="secondaryColor"
+                type="text"
+                required
+                pattern="^#[0-9A-Fa-f]{6}$"
+                defaultValue={tenant.secondary_color || "#CA8A04"}
+                placeholder="#CA8A04"
+                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 font-mono text-sm text-zinc-100"
+              />
+            </div>
           </div>
 
           <div>
@@ -106,12 +172,29 @@ async function AdminConfigContent() {
             />
           </div>
 
+          <div>
+            <label
+              htmlFor="tenant-banner-url-input"
+              className="mb-1 block text-xs font-semibold text-zinc-300"
+            >
+              URL del Banner de Cabecera (opcional)
+            </label>
+            <input
+              id="tenant-banner-url-input"
+              name="bannerUrl"
+              type="url"
+              defaultValue={tenant.banner_url ?? ""}
+              placeholder="https://..."
+              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100"
+            />
+          </div>
+
           <button
             id="save-tenant-settings-btn"
             type="submit"
             className="w-full rounded-xl bg-[#E5A93C] px-4 py-3 text-xs font-black text-zinc-950 hover:bg-[#CA8A04]"
           >
-            Guardar Configuración
+            Guardar Configuración e Identidad
           </button>
         </form>
       </section>

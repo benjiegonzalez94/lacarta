@@ -35,11 +35,15 @@ export interface CartCheckoutDrawerProps {
 
 function formatCartItemNotes(item: CartItem): string | null {
   const parts: string[] = [];
-  if (item.selectedSauces.length > 0) {
-    parts.push(`Salsas: ${item.selectedSauces.join(", ")}`);
-  }
-  if (item.selectedOption) {
-    parts.push(`Opción: ${item.selectedOption}`);
+  if (item.selectedModifiers && item.selectedModifiers.length > 0) {
+    parts.push(item.selectedModifiers.map((m) => m.optionName).join(", "));
+  } else {
+    if (item.selectedSauces && item.selectedSauces.length > 0) {
+      parts.push(`Salsas: ${item.selectedSauces.join(", ")}`);
+    }
+    if (item.selectedOption) {
+      parts.push(`Opción: ${item.selectedOption}`);
+    }
   }
   if (item.customNotes) {
     parts.push(item.customNotes);
@@ -88,6 +92,7 @@ export function CartCheckoutDrawer({
       product_id: item.productId,
       quantity: item.quantity,
       notes: formatCartItemNotes(item),
+      option_ids: item.selectedModifiers?.map((m) => m.optionId) ?? [],
     }));
 
     try {
@@ -201,7 +206,7 @@ export function CartCheckoutDrawer({
               Tu carrito está vacío
             </p>
             <p className="mt-1 text-xs text-zinc-500">
-              Agrega tus alitas, hamburguesas o bebidas favoritas del menú.
+              Agrega tus platos o bebidas favoritas del menú.
             </p>
           </div>
         ) : (

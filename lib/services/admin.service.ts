@@ -1,10 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import type {
+  BusinessHourRow,
   CategoryRow,
+  ModifierGroupWithOptions,
   OrderItemRow,
   OrderRow,
   OrderStatus,
+  ProductModifierGroupRow,
   ProductRow,
   TableRow,
   TenantRow,
@@ -20,6 +23,9 @@ export interface AdminTenantDashboardData {
   products: ProductRow[];
   tables: TableRow[];
   orders: OrderWithItems[];
+  businessHours: BusinessHourRow[];
+  modifierGroups: ModifierGroupWithOptions[];
+  productModifierLinks: ProductModifierGroupRow[];
 }
 
 export async function getTenantForOwner(
@@ -39,7 +45,16 @@ export async function getAdminDashboardData(
   supabase: SupabaseClient<Database>,
   tenant: TenantRow
 ): Promise<AdminTenantDashboardData> {
-  const [categoriesRes, productsRes, tablesRes, ordersRes] = await Promise.all([
+  const [
+    categoriesRes,
+    productsRes,
+    tablesRes,
+    ordersRes,
+    hoursRes,
+    groupsRes,
+    optionsRes,
+    linksRes,
+  ] = await Promise.all([
     supabase
       .from("categories")
       .select("*")
@@ -61,6 +76,26 @@ export async function getAdminDashboardData(
       .eq("tenant_id", tenant.id)
       .order("created_at", { ascending: false })
       .limit(30),
+    supabase
+      .from("business_hours")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .order("day_of_week", { ascending: true }),
+    supabase
+      .from("modifier_groups")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("modifier_options")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_modifier_groups")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .order("sort_order", { ascending: true }),
   ]);
 
   const rawOrders = ordersRes.data ?? [];
@@ -81,12 +116,23 @@ export async function getAdminDashboardData(
     items: orderItems.filter((item) => item.order_id === order.id),
   }));
 
+  const rawOptions = optionsRes.data ?? [];
+  const modifierGroups: ModifierGroupWithOptions[] = (groupsRes.data ?? []).map(
+    (grp) => ({
+      ...grp,
+      options: rawOptions.filter((opt) => opt.group_id === grp.id),
+    })
+  );
+
   return {
     tenant,
     categories: categoriesRes.data ?? [],
     products: productsRes.data ?? [],
     tables: tablesRes.data ?? [],
     orders,
+    businessHours: hoursRes.data ?? [],
+    modifierGroups,
+    productModifierLinks: linksRes.data ?? [],
   };
 }
 

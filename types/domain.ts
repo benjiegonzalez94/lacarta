@@ -6,6 +6,10 @@ export type ProductRow = Tables<"products">;
 export type TableRow = Tables<"tables">;
 export type OrderRow = Tables<"orders">;
 export type OrderItemRow = Tables<"order_items">;
+export type BusinessHourRow = Tables<"business_hours">;
+export type ModifierGroupRow = Tables<"modifier_groups">;
+export type ModifierOptionRow = Tables<"modifier_options">;
+export type ProductModifierGroupRow = Tables<"product_modifier_groups">;
 
 export type OrderType = "delivery" | "pickup" | "dine_in";
 
@@ -24,6 +28,10 @@ export interface SauceOption {
   spicyIcon?: string;
 }
 
+export interface ModifierGroupWithOptions extends ModifierGroupRow {
+  options: ModifierOptionRow[];
+}
+
 export interface ProductCustomizationMeta {
   tag?: string;
   isPromo?: boolean;
@@ -35,6 +43,7 @@ export interface ProductCustomizationMeta {
 
 export interface EnrichedProduct extends ProductRow {
   meta: ProductCustomizationMeta;
+  modifierGroups: ModifierGroupWithOptions[];
 }
 
 export interface MenuCategoryWithProducts extends CategoryRow {
@@ -45,8 +54,10 @@ export interface MenuCategoryWithProducts extends CategoryRow {
 }
 
 export interface DayScheduleItem {
+  dayOfWeek: number;
   dayName: string;
   hours: string;
+  isOpen: boolean;
 }
 
 export interface ScheduleStatus {
@@ -59,6 +70,9 @@ export interface ScheduleStatus {
 
 export interface TenantBranding {
   slogan: string;
+  primaryColor: string;
+  secondaryColor: string;
+  bannerUrl: string | null;
   taglines: string[];
   serviceNotice: string;
 }
@@ -77,12 +91,22 @@ export interface ResolvedTable {
   qrToken: string;
 }
 
+export interface SelectedModifierChoice {
+  optionId: string;
+  groupId: string;
+  groupName: string;
+  optionName: string;
+  priceDelta: number;
+}
+
 export interface CartItem {
   cartItemId: string;
   productId: string;
   name: string;
+  basePrice: number;
   unitPrice: number;
   quantity: number;
+  selectedModifiers: SelectedModifierChoice[];
   selectedSauces: string[];
   selectedOption: string | null;
   customNotes: string;
@@ -92,6 +116,7 @@ export interface OrderItemPayload {
   product_id: string;
   quantity: number;
   notes: string | null;
+  option_ids?: string[];
 }
 
 export interface PlaceOrderInput {

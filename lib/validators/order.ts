@@ -27,6 +27,10 @@ export const OrderItemInputSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null)),
+  option_ids: z
+    .array(z.string().uuid("ID de opción inválido."))
+    .max(20, "Máximo 20 opciones por ítem.")
+    .optional(),
 });
 
 export const PlaceOrderSchema = z

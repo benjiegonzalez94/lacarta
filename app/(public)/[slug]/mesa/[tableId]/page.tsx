@@ -1,6 +1,7 @@
-import { Suspense } from "react";
+import { Suspense, type CSSProperties } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { PublicMenuClient } from "@/components/menu/PublicMenuClient";
 import { RestaurantHeader } from "@/components/menu/RestaurantHeader";
 import {
@@ -42,6 +43,7 @@ export async function generateMetadata({
 }
 
 async function TableMenuContent({ params }: TableMenuPageProps) {
+  await connection();
   const { slug: rawSlug, tableId: rawTableId } = await params;
   const parsedSlug = SlugSchema.safeParse(rawSlug);
   const parsedToken = QrTokenSchema.safeParse(rawTableId);
@@ -60,8 +62,16 @@ async function TableMenuContent({ params }: TableMenuPageProps) {
     notFound();
   }
 
+  const themeStyle = {
+    "--tenant-primary": menu.branding.primaryColor,
+    "--tenant-secondary": menu.branding.secondaryColor,
+  } as CSSProperties;
+
   return (
-    <div className="flex min-h-screen flex-col bg-[#0F0F11] text-zinc-50">
+    <div
+      style={themeStyle}
+      className="flex min-h-screen flex-col bg-[#0F0F11] text-zinc-50"
+    >
       <RestaurantHeader
         tenant={menu.tenant}
         branding={menu.branding}

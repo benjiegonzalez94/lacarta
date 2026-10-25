@@ -3,73 +3,126 @@
 import { useState } from "react";
 import { Check, Flame, Minus, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { formatCurrency } from "@/lib/utils/currency";
-import type { EnrichedProduct, SauceOption } from "@/types/domain";
+import { formatCurrency, roundMoney } from "@/lib/utils/currency";
+import type {
+  EnrichedProduct,
+  ModifierGroupWithOptions,
+  ModifierOptionRow,
+  SelectedModifierChoice,
+} from "@/types/domain";
 
 export interface ProductCustomizeModalProps {
   product: EnrichedProduct;
-  sauces: SauceOption[];
   onClose: () => void;
   onConfirmAdd: (params: {
     product: EnrichedProduct;
     quantity: number;
-    selectedSauces: string[];
-    selectedOption: string | null;
+    selectedModifiers: SelectedModifierChoice[];
     customNotes: string;
   }) => void;
 }
 
 export function ProductCustomizeModal({
   product,
-  sauces,
   onClose,
   onConfirmAdd,
 }: ProductCustomizeModalProps) {
-  const maxSauces = product.meta.maxSauces ?? 0;
-  const choiceList =
-    product.meta.options ?? product.meta.flavors ?? ([] as string[]);
-
   const [quantity, setQuantity] = useState<number>(1);
-  const [selectedSauces, setSelectedSauces] = useState<string[]>([]);
-  const [selectedOption, setSelectedOption] = useState<string | null>(
-    choiceList.length > 0 ? choiceList[0] : null
-  );
+  const [selectionsByGroup, setSelectionsByGroup] = useState<
+    Record<string, string[]>
+  >(() => {
+    const initial: Record<string, string[]> = {};
+    for (const grp of product.modifierGroups) {
+      if (grp.min_select === 1 && grp.max_select === 1 && grp.options[0]) {
+        initial[grp.id] = [grp.options[0].id];
+      } else {
+        initial[grp.id] = [];
+      }
+    }
+    return initial;
+  });
   const [customNotes, setCustomNotes] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  function toggleSauce(sauceName: string) {
+  function toggleOption(
+    group: ModifierGroupWithOptions,
+    option: ModifierOptionRow
+  ) {
     setErrorMessage(null);
-    setSelectedSauces((prev) => {
-      if (prev.includes(sauceName)) {
-        return prev.filter((item) => item !== sauceName);
+    setSelectionsByGroup((prev) => {
+      const current = prev[group.id] ?? [];
+      const isSelected = current.includes(option.id);
+
+      // Single-choice group (radio behavior)
+      if (group.max_select === 1) {
+        if (isSelected && group.min_select === 0) {
+          return { ...prev, [group.id]: [] };
+        }
+        return { ...prev, [group.id]: [option.id] };
       }
-      if (maxSauces > 0 && prev.length >= maxSauces) {
+
+      // Multi-choice group (checkbox behavior up to max_select)
+      if (isSelected) {
+        return {
+          ...prev,
+          [group.id]: current.filter((id) => id !== option.id),
+        };
+      }
+      if (current.length >= group.max_select) {
         return prev;
       }
-      return [...prev, sauceName];
+      return {
+        ...prev,
+        [group.id]: [...current, option.id],
+      };
     });
   }
 
-  function handleConfirm() {
-    if (maxSauces > 0 && selectedSauces.length === 0) {
-      setErrorMessage("Por favor selecciona al menos 1 salsa para tus alitas.");
-      return;
+  function buildSelectedModifiers(): SelectedModifierChoice[] {
+    const result: SelectedModifierChoice[] = [];
+    for (const grp of product.modifierGroups) {
+      const selectedIds = selectionsByGroup[grp.id] ?? [];
+      for (const opt of grp.options) {
+        if (selectedIds.includes(opt.id)) {
+          result.push({
+            optionId: opt.id,
+            groupId: grp.id,
+            groupName: grp.name,
+            optionName: opt.name,
+            priceDelta: Number(opt.price_delta),
+          });
+        }
+      }
     }
-    if (choiceList.length > 0 && !selectedOption) {
-      setErrorMessage("Por favor selecciona una opción o sabor.");
-      return;
+    return result;
+  }
+
+  function handleConfirm() {
+    for (const grp of product.modifierGroups) {
+      const selectedCount = (selectionsByGroup[grp.id] ?? []).length;
+      if (selectedCount < grp.min_select) {
+        setErrorMessage(
+          `Selecciona al menos ${grp.min_select} opción en "${grp.name}".`
+        );
+        return;
+      }
     }
 
     onConfirmAdd({
       product,
       quantity,
-      selectedSauces,
-      selectedOption,
+      selectedModifiers: buildSelectedModifiers(),
       customNotes: customNotes.trim(),
     });
   }
 
-  const lineTotal = product.price * quantity;
+  const currentModifiers = buildSelectedModifiers();
+  const extraPricePerUnit = currentModifiers.reduce(
+    (sum, m) => sum + m.priceDelta,
+    0
+  );
+  const unitPrice = roundMoney(product.price + extraPricePerUnit);
+  const lineTotal = roundMoney(unitPrice * quantity);
 
   return (
     <div
@@ -86,7 +139,7 @@ export function ProductCustomizeModal({
               <img
                 src={product.image_url}
                 alt={product.name}
-                className="h-14 w-14 shrink-0 rounded-xl object-cover border border-zinc-700"
+                className="h-14 w-14 shrink-0 rounded-xl border border-zinc-700 object-cover"
               />
             ) : null}
             <div>
@@ -115,110 +168,91 @@ export function ProductCustomizeModal({
         </div>
 
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
-          {maxSauces > 0 ? (
-            <div>
-              <div className="mb-2.5 flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-zinc-100">
-                    Elige tus salsas
-                  </h3>
-                  <p className="text-xs text-zinc-400">
-                    Puedes seleccionar de 1 hasta {maxSauces}{" "}
-                    {maxSauces === 1 ? "salsa" : "salsas"}
-                  </p>
+          {product.modifierGroups.map((group) => {
+            const selectedIds = selectionsByGroup[group.id] ?? [];
+            const isRequired = group.min_select > 0;
+            const subtitle =
+              group.min_select === 1 && group.max_select === 1
+                ? "Selecciona 1 opción"
+                : group.min_select > 0
+                  ? `Elige de ${group.min_select} a ${group.max_select} opciones`
+                  : `Opcional (hasta ${group.max_select})`;
+
+            return (
+              <div key={group.id}>
+                <div className="mb-2.5 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-100">
+                      {group.name}
+                    </h3>
+                    <p className="text-xs text-zinc-400">{subtitle}</p>
+                  </div>
+                  <Badge
+                    variant={
+                      selectedIds.length >= group.min_select && isRequired
+                        ? "primary"
+                        : "muted"
+                    }
+                  >
+                    {group.max_select > 1
+                      ? `${selectedIds.length}/${group.max_select}`
+                      : isRequired
+                        ? "Obligatorio"
+                        : "Opcional"}
+                  </Badge>
                 </div>
-                <Badge
-                  variant={selectedSauces.length > 0 ? "primary" : "muted"}
-                >
-                  {selectedSauces.length}/{maxSauces} elegidas
-                </Badge>
-              </div>
 
-              <div className="space-y-2">
-                {sauces.map((sauce) => {
-                  const isSelected = selectedSauces.includes(sauce.name);
-                  const isDisabled =
-                    !isSelected && selectedSauces.length >= maxSauces;
+                <div className="space-y-2">
+                  {group.options.map((option) => {
+                    const isSelected = selectedIds.includes(option.id);
+                    const isDisabled =
+                      group.max_select > 1 &&
+                      !isSelected &&
+                      selectedIds.length >= group.max_select;
+                    const delta = Number(option.price_delta);
 
-                  return (
-                    <button
-                      key={sauce.id}
-                      id={`sauce-option-${sauce.id}`}
-                      type="button"
-                      disabled={isDisabled}
-                      onClick={() => toggleSauce(sauce.name)}
-                      className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
-                        isSelected
-                          ? "border-[#E5A93C] bg-[#E5A93C]/12 text-zinc-50"
-                          : isDisabled
-                            ? "cursor-not-allowed border-zinc-800/50 bg-zinc-900/40 opacity-50"
-                            : "border-zinc-800 bg-[#202024] text-zinc-200 hover:border-zinc-700"
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center gap-1.5 text-sm font-semibold">
-                          <span>{sauce.name}</span>
-                          {sauce.spicyIcon ? (
-                            <span aria-label="Picante">{sauce.spicyIcon}</span>
-                          ) : null}
-                        </div>
-                        <p className="text-xs text-zinc-400">
-                          {sauce.description}
-                        </p>
-                      </div>
-
-                      <div
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                    return (
+                      <button
+                        key={option.id}
+                        id={`mod-option-${option.id}`}
+                        type="button"
+                        disabled={isDisabled}
+                        onClick={() => toggleOption(group, option)}
+                        className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
                           isSelected
-                            ? "border-[#E5A93C] bg-[#E5A93C] text-zinc-950"
-                            : "border-zinc-600"
+                            ? "border-[#E5A93C] bg-[#E5A93C]/12 text-zinc-50"
+                            : isDisabled
+                              ? "cursor-not-allowed border-zinc-800/50 bg-zinc-900/40 opacity-50"
+                              : "border-zinc-800 bg-[#202024] text-zinc-200 hover:border-zinc-700"
                         }`}
                       >
-                        {isSelected ? <Check className="h-3.5 w-3.5" /> : null}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
+                        <div className="flex items-center gap-2 text-sm font-semibold">
+                          <span>{option.name}</span>
+                          {delta > 0 ? (
+                            <span className="rounded-md bg-[#E5A93C]/20 px-1.5 py-0.5 text-xs font-bold text-[#E5A93C]">
+                              +{formatCurrency(delta)}
+                            </span>
+                          ) : null}
+                        </div>
 
-          {choiceList.length > 0 ? (
-            <div>
-              <div className="mb-2.5 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-zinc-100">
-                  {product.meta.flavors
-                    ? "Selecciona el sabor"
-                    : "Selecciona una opción"}
-                </h3>
-                <Badge variant="primary">Obligatorio</Badge>
+                        <div
+                          className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                            isSelected
+                              ? "border-[#E5A93C] bg-[#E5A93C] text-zinc-950"
+                              : "border-zinc-600"
+                          }`}
+                        >
+                          {isSelected ? (
+                            <Check className="h-3.5 w-3.5" />
+                          ) : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {choiceList.map((choice) => {
-                  const isSelected = selectedOption === choice;
-                  return (
-                    <button
-                      key={choice}
-                      id={`choice-option-${choice.toLowerCase().replace(/\s+/g, "-")}`}
-                      type="button"
-                      onClick={() => {
-                        setErrorMessage(null);
-                        setSelectedOption(choice);
-                      }}
-                      className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all ${
-                        isSelected
-                          ? "border-[#E5A93C] bg-[#E5A93C]/15 text-[#E5A93C]"
-                          : "border-zinc-800 bg-[#202024] text-zinc-300 hover:border-zinc-700"
-                      }`}
-                    >
-                      <span>{choice}</span>
-                      {isSelected ? <Check className="h-4 w-4" /> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
+            );
+          })}
 
           <div>
             <label

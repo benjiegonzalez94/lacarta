@@ -2,10 +2,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getScheduleStatus } from "@/lib/utils/schedule";
 import type { Database } from "@/types/database";
 import type {
+  BusinessHourRow,
   CategoryRow,
   EnrichedProduct,
   MenuCategoryWithProducts,
+  ModifierGroupRow,
+  ModifierGroupWithOptions,
+  ModifierOptionRow,
   ProductCustomizationMeta,
+  ProductModifierGroupRow,
   ProductRow,
   PublicMenuBundle,
   ResolvedTable,
@@ -95,39 +100,10 @@ const CATEGORY_META_BY_NAME: Record<
   },
 };
 
-function inferProductCustomization(
-  product: ProductRow,
-  categoryName: string
-): ProductCustomizationMeta {
+function inferProductVisualMeta(product: ProductRow): ProductCustomizationMeta {
   const normalizedName = product.name.toLowerCase();
-  const normalizedDesc = (product.description ?? "").toLowerCase();
-  const normalizedCat = categoryName.toLowerCase();
-
   const meta: ProductCustomizationMeta = {};
 
-  // Detect sauce count from description or product name (e.g. "2 salsas a elección", "3 salsas")
-  const sauceMatch =
-    normalizedDesc.match(/(\d+)\s*(?:salsas?|sabores?)/i) ??
-    normalizedName.match(/(\d+)\s*(?:salsas?|sabores?)/i);
-
-  if (sauceMatch) {
-    const count = Number.parseInt(sauceMatch[1], 10);
-    if (Number.isFinite(count) && count > 0) {
-      meta.maxSauces = count;
-    }
-  } else if (normalizedCat.includes("alitas")) {
-    meta.maxSauces = 2;
-  }
-
-  if (
-    normalizedName.includes("papas") ||
-    normalizedCat.includes("alitas") ||
-    normalizedDesc.includes("papas")
-  ) {
-    meta.includesFries = true;
-  }
-
-  // Tags for visual hierarchy
   if (normalizedName.includes("promo")) {
     meta.tag = "PROMO DEL DÍA";
     meta.isPromo = true;
@@ -155,28 +131,6 @@ function inferProductCustomization(
     meta.tag = "INFANTIL";
   }
 
-  // Options for extra sauces
-  if (normalizedName.includes("salsa cheddar")) {
-    meta.options = ["Salsa Cheddar", "Salsa Ranch", "Queso Crema"];
-  }
-
-  // Flavors for sodas / colas or Fuze Tea
-  if (normalizedCat.includes("colas")) {
-    if (normalizedName.includes("vidrio")) {
-      meta.flavors = [
-        "Coca-Cola",
-        "Sprite",
-        "Fanta",
-        "Inca Kola",
-        "Fioravanti",
-      ];
-    } else {
-      meta.flavors = ["Coca-Cola", "Sprite", "Fanta", "Inca Kola"];
-    }
-  } else if (normalizedName.includes("fuze")) {
-    meta.flavors = ["Fuze Tea Limón", "Fuze Tea Durazno"];
-  }
-
   return meta;
 }
 
@@ -194,7 +148,14 @@ export async function getPublicMenuBySlug(
     return null;
   }
 
-  const [{ data: categoriesData }, { data: productsData }] = await Promise.all([
+  const [
+    { data: categoriesData },
+    { data: productsData },
+    { data: hoursData },
+    { data: groupsData },
+    { data: optionsData },
+    { data: productGroupsData },
+  ] = await Promise.all([
     supabase
       .from("categories")
       .select("*")
@@ -206,10 +167,51 @@ export async function getPublicMenuBySlug(
       .eq("tenant_id", tenant.id)
       .eq("is_available", true)
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("business_hours")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .order("day_of_week", { ascending: true }),
+    supabase
+      .from("modifier_groups")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("modifier_options")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .eq("is_available", true)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_modifier_groups")
+      .select("*")
+      .eq("tenant_id", tenant.id)
+      .order("sort_order", { ascending: true }),
   ]);
 
   const rawCategories: CategoryRow[] = categoriesData ?? [];
   const rawProducts: ProductRow[] = productsData ?? [];
+  const rawHours: BusinessHourRow[] = hoursData ?? [];
+  const rawGroups: ModifierGroupRow[] = groupsData ?? [];
+  const rawOptions: ModifierOptionRow[] = optionsData ?? [];
+  const rawProductLinks: ProductModifierGroupRow[] = productGroupsData ?? [];
+
+  const groupsWithOptionsMap = new Map<string, ModifierGroupWithOptions>();
+  for (const grp of rawGroups) {
+    const grpOptions = rawOptions
+      .filter((opt) => opt.group_id === grp.id)
+      .map((opt) => ({
+        ...opt,
+        price_delta: Number(opt.price_delta),
+      }));
+    if (grpOptions.length > 0) {
+      groupsWithOptionsMap.set(grp.id, {
+        ...grp,
+        options: grpOptions,
+      });
+    }
+  }
 
   const categories: MenuCategoryWithProducts[] = rawCategories
     .map((category) => {
@@ -217,11 +219,19 @@ export async function getPublicMenuBySlug(
       const extra = CATEGORY_META_BY_NAME[catKey];
       const categoryProducts: EnrichedProduct[] = rawProducts
         .filter((p) => p.category_id === category.id)
-        .map((product) => ({
-          ...product,
-          price: Number(product.price),
-          meta: inferProductCustomization(product, category.name),
-        }));
+        .map((product) => {
+          const attachedGroups = rawProductLinks
+            .filter((link) => link.product_id === product.id)
+            .map((link) => groupsWithOptionsMap.get(link.group_id))
+            .filter((g): g is ModifierGroupWithOptions => Boolean(g));
+
+          return {
+            ...product,
+            price: Number(product.price),
+            meta: inferProductVisualMeta(product),
+            modifierGroups: attachedGroups,
+          };
+        });
 
       return {
         ...category,
@@ -239,17 +249,19 @@ export async function getPublicMenuBySlug(
       delivery_fee: Number(tenant.delivery_fee),
     },
     branding: {
-      slogan: "Arte en Sabor",
+      slogan: tenant.slogan || "Arte en Sabor",
+      primaryColor: tenant.primary_color || "#E5A93C",
+      secondaryColor: tenant.secondary_color || "#D34E27",
+      bannerUrl: tenant.banner_url ?? null,
       taglines: [
-        "Arte en Sabor",
-        "Alitas, Amigos y Buenos Momentos",
-        "Alitas • Papas Fritas • Hamburguesas",
+        tenant.slogan || "Arte en Sabor",
+        "Calidad y sabor preparados al momento",
       ],
       serviceNotice: "Servicio a Domicilio disponible en horario de atención",
     },
     categories,
     sauces: DEFAULT_SAUCES,
-    schedule: getScheduleStatus(),
+    schedule: getScheduleStatus(rawHours),
   };
 }
 

@@ -16,11 +16,8 @@ export function ProductCard({
   quantityInCart,
   onSelectProduct,
 }: ProductCardProps) {
-  const { meta } = product;
-  const requiresCustomization =
-    Boolean(meta.maxSauces && meta.maxSauces > 0) ||
-    Boolean(meta.options && meta.options.length > 0) ||
-    Boolean(meta.flavors && meta.flavors.length > 0);
+  const { meta, modifierGroups } = product;
+  const requiresCustomization = modifierGroups.length > 0;
 
   return (
     <article
@@ -53,23 +50,23 @@ export function ProductCard({
               {meta.tag ? (
                 <Badge
                   variant={meta.isPromo ? "secondary" : "primary"}
-                  className="backdrop-blur-md bg-black/60"
+                  className="bg-black/60 backdrop-blur-md"
                 >
                   {meta.isPromo ? <Sparkles className="h-3 w-3" /> : null}
                   {meta.tag}
                 </Badge>
               ) : null}
 
-              {meta.maxSauces ? (
+              {modifierGroups.map((group) => (
                 <Badge
+                  key={group.id}
                   variant="muted"
-                  className="backdrop-blur-md bg-black/65"
+                  className="bg-black/65 backdrop-blur-md"
                 >
                   <Flame className="h-3 w-3 text-[#E5A93C]" />
-                  Hasta {meta.maxSauces}{" "}
-                  {meta.maxSauces === 1 ? "salsa" : "salsas"}
+                  {group.name}
                 </Badge>
-              ) : null}
+              ))}
             </div>
 
             {quantityInCart > 0 ? (
@@ -81,16 +78,6 @@ export function ProductCard({
         </div>
 
         <div className="px-4 pt-3">
-          <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-            {meta.flavors && meta.flavors.length > 0 ? (
-              <Badge variant="muted">Elige sabor</Badge>
-            ) : null}
-
-            {meta.options && meta.options.length > 0 ? (
-              <Badge variant="muted">Elige opción</Badge>
-            ) : null}
-          </div>
-
           <h3 className="text-base font-bold text-zinc-100 transition-colors group-hover:text-[#E5A93C]">
             {product.name}
           </h3>
@@ -118,7 +105,7 @@ export function ProductCard({
           className="inline-flex items-center gap-1.5 rounded-xl bg-[#E5A93C] px-3.5 py-2 text-xs font-bold text-zinc-950 shadow-sm transition-all hover:bg-[#CA8A04] active:scale-95"
         >
           <Plus className="h-4 w-4 stroke-[2.5]" />
-          <span>{requiresCustomization ? "Elegir y agregar" : "Agregar"}</span>
+          <span>{requiresCustomization ? "Personalizar" : "Agregar"}</span>
         </button>
       </div>
     </article>
