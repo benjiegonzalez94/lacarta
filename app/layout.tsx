@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   },
   description:
     "Plataforma multi-tenant de menús digitales para restaurantes con pedidos directos a WhatsApp y códigos QR en mesa.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

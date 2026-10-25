@@ -1,0 +1,10 @@
+{
+  "name": "LaCarta — Menús Digitales y Pedidos",
+  "short_name": "LaCarta",
+  "description": "Menús digitales multi-tenant con pedidos por WhatsApp y códigos QR en mesa.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F0F11",
+  "theme_color": "#E5A93C",
+  "orientation": "portrait"
+}

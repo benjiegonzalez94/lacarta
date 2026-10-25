@@ -1,0 +1,92 @@
+name: Build Android APK (Capacitor)
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: 'URL de producción en Vercel (ej. https://lacarta-xxx.vercel.app)'
+        required: false
+        default: ''
+  push:
+    branches: [main]
+    paths:
+      - 'capacitor.config.json'
+      - '.github/workflows/android-apk.yml'
+
+jobs:
+  build-apk:
+    name: Generate Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Setup Java 21 for Android Gradle
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install project dependencies & Capacitor
+        run: |
+          npm ci
+          npm install --no-save @capacitor/core@^7.0.0 @capacitor/cli@^7.0.0 @capacitor/android@^7.0.0
+
+      - name: Prepare Capacitor configuration & web assets
+        env:
+          INPUT_SERVER_URL: ${{ github.event.inputs.server_url }}
+        run: |
+          mkdir -p out
+          cp public/favicon.ico out/favicon.ico || true
+          cat << 'EOF' > out/index.html
+          <!DOCTYPE html>
+          <html lang="es">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>LaCarta</title>
+            </head>
+            <body style="background:#0F0F11;color:#FAFAFA;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+              <p>Conectando con LaCarta...</p>
+            </body>
+          </html>
+          EOF
+
+          if [ -n "$INPUT_SERVER_URL" ]; then
+            node -e "
+              const fs = require('fs');
+              const cfg = JSON.parse(fs.readFileSync('capacitor.config.json', 'utf8'));
+              cfg.server.url = process.env.INPUT_SERVER_URL.replace(/\/$/, '');
+              fs.writeFileSync('capacitor.config.json', JSON.stringify(cfg, null, 2));
+            "
+          fi
+
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Debug APK with Gradle
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Rename APK for easy download
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk ./lacarta-android.apk
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lacarta-android-apk
+          path: ./lacarta-android.apk
+          retention-days: 30

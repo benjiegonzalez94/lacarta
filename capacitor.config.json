@@ -1,0 +1,18 @@
+{
+  "appId": "com.lacarta.app",
+  "appName": "LaCarta",
+  "webDir": "out",
+  "server": {
+    "url": "https://lacartaec.vercel.app",
+    "cleartext": false,
+    "allowNavigation": [
+      "lacartaec.vercel.app",
+      "*.vercel.app",
+      "*.supabase.co"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#0F0F11",
+    "allowMixedContent": false
+  }
+}
