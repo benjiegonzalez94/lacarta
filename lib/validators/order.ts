@@ -94,11 +94,12 @@ export const PlaceOrderSchema = z
       });
     }
 
-    if (!data.customerPhone || data.customerPhone.trim().length < 7) {
+    const phone = data.customerPhone?.trim() ?? "";
+    if (!/^\+?[0-9\s()-]{7,20}$/.test(phone)) {
       ctx.addIssue({
         code: "custom",
         path: ["customerPhone"],
-        message: "Ingresa un número de teléfono válido.",
+        message: "Ingresa un número de teléfono válido (mínimo 7 dígitos).",
       });
     }
 

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const UuidSchema = z.string().uuid("Identificador UUID inválido.");
+
 export const CategoryFormSchema = z.object({
   name: z
     .string()
@@ -7,6 +9,10 @@ export const CategoryFormSchema = z.object({
     .min(1, "El nombre de la categoría es obligatorio.")
     .max(80, "Máximo 80 caracteres."),
   sortOrder: z.coerce.number().int().min(0).max(999).default(0),
+});
+
+export const CategoryUpdateSchema = CategoryFormSchema.extend({
+  categoryId: UuidSchema,
 });
 
 export const ProductFormSchema = z.object({
@@ -35,6 +41,10 @@ export const ProductFormSchema = z.object({
     .transform((v) => (v && v.length > 0 ? v : null)),
   isAvailable: z.boolean().default(true),
   sortOrder: z.coerce.number().int().min(0).max(999).default(0),
+});
+
+export const ProductUpdateSchema = ProductFormSchema.extend({
+  productId: UuidSchema,
 });
 
 export const TenantSettingsSchema = z.object({

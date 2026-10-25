@@ -7,12 +7,23 @@ import {
 } from "@/lib/supabase/server";
 import {
   CategoryFormSchema,
+  CategoryUpdateSchema,
   OrderStatusUpdateSchema,
   ProductFormSchema,
+  ProductUpdateSchema,
   TableCreateSchema,
   TenantSettingsSchema,
+  UuidSchema,
 } from "@/lib/validators/admin";
 import type { TenantRow } from "@/types/domain";
+
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+]);
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 async function requireOwnedTenant(): Promise<{
   supabase: Awaited<ReturnType<typeof createClient>>;
@@ -38,6 +49,53 @@ async function requireOwnedTenant(): Promise<{
   }
 
   return { supabase, tenant };
+}
+
+async function uploadProductImageIfPresent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  tenantId: string,
+  formData: FormData
+): Promise<string | null> {
+  const fileEntry = formData.get("imageFile");
+  if (!(fileEntry instanceof File) || fileEntry.size <= 0) {
+    return null;
+  }
+
+  if (!ALLOWED_IMAGE_MIME_TYPES.has(fileEntry.type)) {
+    throw new Error(
+      "Formato de imagen no soportado. Usa JPG, PNG, WebP o AVIF."
+    );
+  }
+
+  if (fileEntry.size > MAX_IMAGE_BYTES) {
+    throw new Error("La imagen supera el límite máximo de 5 MB.");
+  }
+
+  const extMap: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/avif": "avif",
+  };
+  const ext = extMap[fileEntry.type] ?? "jpg";
+  const objectPath = `${tenantId}/${crypto.randomUUID()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("product-images")
+    .upload(objectPath, fileEntry, {
+      contentType: fileEntry.type,
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new Error(`Error al subir imagen: ${uploadError.message}`);
+  }
+
+  const { data } = supabase.storage
+    .from("product-images")
+    .getPublicUrl(objectPath);
+
+  return data.publicUrl;
 }
 
 /**
@@ -100,15 +158,15 @@ export async function claimPilotTenantAction(): Promise<{
 
 export async function toggleProductAvailabilityAction(formData: FormData) {
   const { supabase, tenant } = await requireOwnedTenant();
-  const productId = String(formData.get("productId") ?? "");
+  const parsedId = UuidSchema.safeParse(formData.get("productId"));
   const nextAvailable = formData.get("nextAvailable") === "true";
 
-  if (!productId) return;
+  if (!parsedId.success) return;
 
   await supabase
     .from("products")
     .update({ is_available: nextAvailable })
-    .eq("id", productId)
+    .eq("id", parsedId.data)
     .eq("tenant_id", tenant.id);
 
   revalidatePath("/admin/productos");
@@ -136,14 +194,60 @@ export async function createCategoryAction(formData: FormData) {
   revalidatePath(`/${tenant.slug}`);
 }
 
+export async function updateCategoryAction(formData: FormData) {
+  const { supabase, tenant } = await requireOwnedTenant();
+  const parsed = CategoryUpdateSchema.safeParse({
+    categoryId: formData.get("categoryId"),
+    name: formData.get("name"),
+    sortOrder: formData.get("sortOrder") || 0,
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await supabase
+    .from("categories")
+    .update({
+      name: parsed.data.name,
+      sort_order: parsed.data.sortOrder,
+    })
+    .eq("id", parsed.data.categoryId)
+    .eq("tenant_id", tenant.id);
+
+  revalidatePath("/admin/productos");
+  revalidatePath(`/${tenant.slug}`);
+}
+
+export async function deleteCategoryAction(formData: FormData) {
+  const { supabase, tenant } = await requireOwnedTenant();
+  const parsedId = UuidSchema.safeParse(formData.get("categoryId"));
+  if (!parsedId.success) return;
+
+  await supabase
+    .from("categories")
+    .delete()
+    .eq("id", parsedId.data)
+    .eq("tenant_id", tenant.id);
+
+  revalidatePath("/admin/productos");
+  revalidatePath(`/${tenant.slug}`);
+}
+
 export async function createProductAction(formData: FormData) {
   const { supabase, tenant } = await requireOwnedTenant();
+  const uploadedUrl = await uploadProductImageIfPresent(
+    supabase,
+    tenant.id,
+    formData
+  );
+
   const parsed = ProductFormSchema.safeParse({
     categoryId: formData.get("categoryId"),
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     price: formData.get("price"),
-    imageUrl: formData.get("imageUrl") || undefined,
+    imageUrl: uploadedUrl ?? (formData.get("imageUrl") || undefined),
     isAvailable: true,
     sortOrder: formData.get("sortOrder") || 0,
   });
@@ -167,15 +271,63 @@ export async function createProductAction(formData: FormData) {
   revalidatePath(`/${tenant.slug}`);
 }
 
+export async function updateProductAction(formData: FormData) {
+  const { supabase, tenant } = await requireOwnedTenant();
+  const uploadedUrl = await uploadProductImageIfPresent(
+    supabase,
+    tenant.id,
+    formData
+  );
+
+  const rawImageUrl = formData.get("imageUrl");
+  const effectiveImageUrl =
+    uploadedUrl ??
+    (typeof rawImageUrl === "string" && rawImageUrl.trim().length > 0
+      ? rawImageUrl.trim()
+      : undefined);
+
+  const parsed = ProductUpdateSchema.safeParse({
+    productId: formData.get("productId"),
+    categoryId: formData.get("categoryId"),
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+    price: formData.get("price"),
+    imageUrl: effectiveImageUrl,
+    isAvailable: formData.get("isAvailable") !== "false",
+    sortOrder: formData.get("sortOrder") || 0,
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await supabase
+    .from("products")
+    .update({
+      category_id: parsed.data.categoryId,
+      name: parsed.data.name,
+      description: parsed.data.description,
+      price: parsed.data.price,
+      image_url: parsed.data.imageUrl,
+      is_available: parsed.data.isAvailable,
+      sort_order: parsed.data.sortOrder,
+    })
+    .eq("id", parsed.data.productId)
+    .eq("tenant_id", tenant.id);
+
+  revalidatePath("/admin/productos");
+  revalidatePath(`/${tenant.slug}`);
+}
+
 export async function deleteProductAction(formData: FormData) {
   const { supabase, tenant } = await requireOwnedTenant();
-  const productId = String(formData.get("productId") ?? "");
-  if (!productId) return;
+  const parsedId = UuidSchema.safeParse(formData.get("productId"));
+  if (!parsedId.success) return;
 
   await supabase
     .from("products")
     .delete()
-    .eq("id", productId)
+    .eq("id", parsedId.data)
     .eq("tenant_id", tenant.id);
 
   revalidatePath("/admin/productos");
@@ -220,9 +372,9 @@ export async function createTableAction(formData: FormData) {
     return;
   }
 
-  const qrToken = `${tenant.slug}-mesa-${parsed.data.tableNumber}-${Math.random()
-    .toString(36)
-    .slice(2, 6)}`;
+  const qrToken = `${tenant.slug}-mesa-${parsed.data.tableNumber}-${crypto
+    .randomUUID()
+    .slice(0, 6)}`;
 
   await supabase.from("tables").insert({
     tenant_id: tenant.id,
@@ -235,13 +387,13 @@ export async function createTableAction(formData: FormData) {
 
 export async function deleteTableAction(formData: FormData) {
   const { supabase, tenant } = await requireOwnedTenant();
-  const tableId = String(formData.get("tableId") ?? "");
-  if (!tableId) return;
+  const parsedId = UuidSchema.safeParse(formData.get("tableId"));
+  if (!parsedId.success) return;
 
   await supabase
     .from("tables")
     .delete()
-    .eq("id", tableId)
+    .eq("id", parsedId.data)
     .eq("tenant_id", tenant.id);
 
   revalidatePath("/admin/configuracion");

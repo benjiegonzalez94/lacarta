@@ -79,19 +79,29 @@ export function ProductCustomizeModal({
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 backdrop-blur-xs sm:items-center sm:p-4"
     >
       <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-zinc-800 bg-[#18181B] shadow-2xl sm:rounded-3xl">
-        <div className="flex items-start justify-between border-b border-zinc-800 px-5 py-4">
-          <div>
-            <h2
-              id="customize-modal-title"
-              className="text-lg font-bold text-zinc-50"
-            >
-              {product.name}
-            </h2>
-            {product.description ? (
-              <p className="mt-1 text-xs text-zinc-400">
-                {product.description}
-              </p>
+        <div className="flex items-start justify-between gap-3 border-b border-zinc-800 px-5 py-4">
+          <div className="flex items-center gap-3">
+            {product.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="h-14 w-14 shrink-0 rounded-xl object-cover border border-zinc-700"
+              />
             ) : null}
+            <div>
+              <h2
+                id="customize-modal-title"
+                className="text-lg font-bold text-zinc-50"
+              >
+                {product.name}
+              </h2>
+              {product.description ? (
+                <p className="mt-1 text-xs text-zinc-400">
+                  {product.description}
+                </p>
+              ) : null}
+            </div>
           </div>
           <button
             id="close-customize-modal-btn"
@@ -231,7 +241,7 @@ export function ProductCustomizeModal({
           {errorMessage ? (
             <div
               role="alert"
-              className=" flex items-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300"
+              className="flex items-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300"
             >
               <Flame className="h-4 w-4 shrink-0 text-red-400" />
               <span>{errorMessage}</span>

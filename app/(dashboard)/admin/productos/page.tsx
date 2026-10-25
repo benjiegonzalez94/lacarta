@@ -1,18 +1,17 @@
 import { Suspense } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Upload } from "lucide-react";
 import {
   createCategoryAction,
   createProductAction,
-  deleteProductAction,
-  toggleProductAvailabilityAction,
+  deleteCategoryAction,
 } from "@/app/(dashboard)/admin/actions";
+import { AdminProductItem } from "@/components/admin/AdminProductItem";
 import { Badge } from "@/components/ui/Badge";
 import {
   getAdminDashboardData,
   getTenantForOwner,
 } from "@/lib/services/admin.service";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency } from "@/lib/utils/currency";
 
 async function AdminProductsContent() {
   const supabase = await createClient();
@@ -157,6 +156,39 @@ async function AdminProductsContent() {
               />
             </div>
 
+            <div>
+              <label
+                htmlFor="new-product-image-url"
+                className="mb-1 block text-xs font-semibold text-zinc-300"
+              >
+                URL de imagen (opcional)
+              </label>
+              <input
+                id="new-product-image-url"
+                name="imageUrl"
+                type="url"
+                placeholder="https://..."
+                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3 py-2 text-sm text-zinc-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="new-product-image-file"
+                className="mb-1 flex items-center gap-1 text-xs font-semibold text-zinc-300"
+              >
+                <Upload className="h-3.5 w-3.5 text-[#E5A93C]" />
+                <span>O subir foto desde tu dispositivo</span>
+              </label>
+              <input
+                id="new-product-image-file"
+                name="imageFile"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/avif"
+                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3 py-1.5 text-xs text-zinc-300 file:mr-2 file:rounded-lg file:border-0 file:bg-[#E5A93C] file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-zinc-950"
+              />
+            </div>
+
             <div className="sm:col-span-2">
               <button
                 id="create-product-submit-btn"
@@ -190,74 +222,33 @@ async function AdminProductsContent() {
                     {categoryProducts.length} productos
                   </Badge>
                 </div>
+
+                {categoryProducts.length === 0 ? (
+                  <form action={deleteCategoryAction}>
+                    <input
+                      type="hidden"
+                      name="categoryId"
+                      value={category.id}
+                    />
+                    <button
+                      id={`delete-category-${category.id}`}
+                      type="submit"
+                      className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs text-red-400 hover:bg-red-500/15"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Eliminar categoría vacía</span>
+                    </button>
+                  </form>
+                ) : null}
               </div>
 
               <div className="divide-y divide-zinc-800/70">
                 {categoryProducts.map((product) => (
-                  <div
+                  <AdminProductItem
                     key={product.id}
-                    className="flex flex-wrap items-center justify-between gap-3 py-3"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-zinc-100">
-                          {product.name}
-                        </span>
-                        <Badge
-                          variant={product.is_available ? "success" : "danger"}
-                        >
-                          {product.is_available ? "Disponible" : "Agotado / Oculto"}
-                        </Badge>
-                      </div>
-                      {product.description ? (
-                        <p className="mt-0.5 text-xs text-zinc-400">
-                          {product.description}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-black text-[#E5A93C]">
-                        {formatCurrency(Number(product.price))}
-                      </span>
-
-                      <form action={toggleProductAvailabilityAction}>
-                        <input
-                          type="hidden"
-                          name="productId"
-                          value={product.id}
-                        />
-                        <input
-                          type="hidden"
-                          name="nextAvailable"
-                          value={product.is_available ? "false" : "true"}
-                        />
-                        <button
-                          id={`toggle-product-${product.id}`}
-                          type="submit"
-                          className="rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E5A93C]"
-                        >
-                          {product.is_available ? "Pausar" : "Activar"}
-                        </button>
-                      </form>
-
-                      <form action={deleteProductAction}>
-                        <input
-                          type="hidden"
-                          name="productId"
-                          value={product.id}
-                        />
-                        <button
-                          id={`delete-product-${product.id}`}
-                          type="submit"
-                          aria-label={`Eliminar ${product.name}`}
-                          className="rounded-xl p-1.5 text-zinc-400 hover:bg-red-500/15 hover:text-red-400"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </form>
-                    </div>
-                  </div>
+                    product={product}
+                    categories={data.categories}
+                  />
                 ))}
               </div>
             </section>

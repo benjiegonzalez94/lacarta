@@ -55,8 +55,17 @@ export function RestaurantHeader({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-[#E5A93C]/40 bg-gradient-to-br from-[#271C15] to-[#18181B] shadow-lg shadow-black/50">
-              <Flame className="h-8 w-8 text-[#E5A93C]" />
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#E5A93C]/40 bg-gradient-to-br from-[#271C15] to-[#18181B] shadow-lg shadow-black/50">
+              {tenant.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={tenant.logo_url}
+                  alt={tenant.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Flame className="h-8 w-8 text-[#E5A93C]" />
+              )}
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
