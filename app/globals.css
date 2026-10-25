@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0f0f11;
+  --foreground: #fafafa;
+  --tenant-bg: #0f0f11;
+  --tenant-card: #18181b;
+  --tenant-elevated: #27272a;
+  --tenant-primary: #e5a93c;
+  --tenant-primary-hover: #ca8a04;
+  --tenant-secondary: #d34e27;
+  --tenant-secondary-hover: #b91c1c;
+  --tenant-whatsapp: #22c55e;
+  --tenant-whatsapp-hover: #16a34a;
+  --tenant-text: #fafafa;
+  --tenant-text-secondary: #d4d4d8;
+  --tenant-text-muted: #a1a1aa;
+  --tenant-border: #27272a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-tenant-bg: var(--tenant-bg);
+  --color-tenant-card: var(--tenant-card);
+  --color-tenant-elevated: var(--tenant-elevated);
+  --color-tenant-primary: var(--tenant-primary);
+  --color-tenant-primary-hover: var(--tenant-primary-hover);
+  --color-tenant-secondary: var(--tenant-secondary);
+  --color-tenant-whatsapp: var(--tenant-whatsapp);
+  --color-tenant-border: var(--tenant-border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Hide scrollbars on horizontal category pill bars while keeping scrollability */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

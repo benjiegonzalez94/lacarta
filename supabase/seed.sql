@@ -95,6 +95,14 @@ begin
     (v_tenant, c_colas, 'Litro de Vidrio',      'Coca-Cola, Sprite, Fanta, Inca, Fiora.', 1.25, true, 3),
     (v_tenant, c_colas, 'Litro de Plástico',    'Coca-Cola, Sprite, Inca, Fanta.',        1.50, true, 4);
 
+  -- Tables (Mesas 1..5 for QR ordering) ----------------------------------------
+  insert into public.tables (tenant_id, table_number, qr_token) values
+    (v_tenant, 1, 'cowiings-mesa-1'),
+    (v_tenant, 2, 'cowiings-mesa-2'),
+    (v_tenant, 3, 'cowiings-mesa-3'),
+    (v_tenant, 4, 'cowiings-mesa-4'),
+    (v_tenant, 5, 'cowiings-mesa-5');
+
   raise notice 'Tenant "cowiings" seeded with id %', v_tenant;
 end;
 $$;

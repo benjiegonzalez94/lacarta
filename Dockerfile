@@ -15,7 +15,12 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time environment variables required for Next.js prerendering if any
+# Accept Coolify build-time arguments so NEXT_PUBLIC_* are inlined into client bundles
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
@@ -23,6 +28,7 @@ RUN npm run build
 
 # Step 3: Production runner
 FROM base AS runner
+WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000

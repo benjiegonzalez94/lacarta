@@ -1,4 +1,4 @@
-name: CI & Quality Gate
+name: CI & Quality Gate (Coolify CD)
 
 on:
   push:
@@ -34,6 +34,27 @@ jobs:
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: 1
-          # Dummy values for build-time validation if needed
-          NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://uxwyvgslthmhvfjjhtbg.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-anon-key' }}
+
+  deploy-coolify:
+    name: Trigger Coolify Deployment (main)
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Coolify Webhook (if configured)
+        env:
+          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
+            echo "No COOLIFY_WEBHOOK_URL secret configured. Relying on Coolify GitHub App / Auto-Deploy."
+            exit 0
+          fi
+          if [ -n "$COOLIFY_TOKEN" ]; then
+            curl -fsSL -X GET "$COOLIFY_WEBHOOK_URL" -H "Authorization: Bearer $COOLIFY_TOKEN"
+          else
+            curl -fsSL -X GET "$COOLIFY_WEBHOOK_URL"
+          fi
