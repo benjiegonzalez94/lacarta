@@ -58,7 +58,7 @@ jobs:
           <html lang="es">
             <head>
               <meta charset="utf-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
               <title>LaCarta</title>
             </head>
             <body style="background:#0F0F11;color:#FAFAFA;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
@@ -78,6 +78,19 @@ jobs:
 
           npx cap add android
           npx cap sync android
+
+          node -e "
+            const fs = require('fs');
+            const manifestPath = 'android/app/src/main/AndroidManifest.xml';
+            let xml = fs.readFileSync(manifestPath, 'utf8');
+            const perms = [
+              '<uses-permission android:name=\"android.permission.CAMERA\" />',
+              '<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\" />',
+              '<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />'
+            ].join('\n    ');
+            xml = xml.replace('<uses-permission android:name=\"android.permission.INTERNET\" />', '<uses-permission android:name=\"android.permission.INTERNET\" />\n    ' + perms);
+            fs.writeFileSync(manifestPath, xml, 'utf8');
+          "
 
       - name: Build Debug APK with Gradle
         working-directory: android
@@ -101,7 +114,7 @@ jobs:
         with:
           tag_name: apk-latest
           name: "LaCarta Android APK (Última versión)"
-          body: "Descarga directa del archivo `lacarta-android.apk` conectado a `https://lacartaec.vercel.app`."
+          body: "Descarga directa del archivo `lacarta-android.apk` con permisos de Cámara QR y Ubicación GPS conectado a `https://lacartaec.vercel.app`."
           files: ./lacarta-android.apk
           prerelease: false
           make_latest: true

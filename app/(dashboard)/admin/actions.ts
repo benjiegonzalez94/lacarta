@@ -490,6 +490,8 @@ export async function updateTenantSettingsAction(formData: FormData) {
     slogan: formData.get("slogan") || "Arte en Sabor",
     phone: formData.get("phone"),
     deliveryFee: formData.get("deliveryFee"),
+    address: formData.get("address") || undefined,
+    bankDetails: formData.get("bankDetails") || undefined,
     primaryColor: formData.get("primaryColor") || "#E5A93C",
     secondaryColor: formData.get("secondaryColor") || "#D34E27",
     logoUrl: formData.get("logoUrl") || undefined,
@@ -507,6 +509,8 @@ export async function updateTenantSettingsAction(formData: FormData) {
       slogan: parsed.data.slogan,
       phone: parsed.data.phone,
       delivery_fee: parsed.data.deliveryFee,
+      address: parsed.data.address,
+      bank_details: parsed.data.bankDetails,
       primary_color: parsed.data.primaryColor,
       secondary_color: parsed.data.secondaryColor,
       logo_url: parsed.data.logoUrl,
@@ -517,6 +521,7 @@ export async function updateTenantSettingsAction(formData: FormData) {
   revalidatePath("/admin/configuracion");
   revalidatePath("/admin");
   revalidatePath(`/${tenant.slug}`);
+  revalidatePath("/");
 }
 
 export async function createTableAction(formData: FormData) {

@@ -1,4 +1,6 @@
+import Link from "next/link";
 import {
+  ArrowLeft,
   Clock,
   Flame,
   MapPin,
@@ -30,7 +32,7 @@ export function RestaurantHeader({
   resolvedTable,
 }: RestaurantHeaderProps) {
   return (
-    <header className="relative overflow-hidden border-b border-zinc-800/80 bg-gradient-to-b from-[#1C1410] via-[#131215] to-[#0F0F11]">
+    <header className="relative overflow-hidden border-b border-zinc-800/80 bg-gradient-to-b from-[#1C1410] via-[#131215] to-[#0F0F11] pt-7 sm:pt-0">
       {branding.bannerUrl ? (
         <div className="pointer-events-none absolute inset-0 opacity-20">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -48,16 +50,38 @@ export function RestaurantHeader({
         style={{ backgroundColor: branding.primaryColor }}
       />
 
-      <div className="relative mx-auto max-w-3xl px-4 pt-6 pb-5">
+      <div className="relative mx-auto max-w-3xl px-4 pt-3 pb-5 sm:pt-6">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <Link
+            id="back-to-lacarta-hub-link"
+            href="/"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-[#18181B]/90 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition-colors hover:border-[#E5A93C] hover:text-[#E5A93C]"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>LaCarta • Locales y Escáner QR</span>
+          </Link>
+
+          {!resolvedTable ? (
+            <Link
+              id="header-scan-table-qr-link"
+              href="/?scan=1"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5A93C]/40 bg-[#E5A93C]/10 px-3 py-1.5 text-xs font-bold text-[#E5A93C] hover:bg-[#E5A93C]/20"
+            >
+              <QrCode className="h-3.5 w-3.5" />
+              <span>¿Estás en una mesa? Escanear QR</span>
+            </Link>
+          ) : null}
+        </div>
+
         {resolvedTable ? (
           <div className="mb-4 flex items-center justify-between rounded-xl border border-[#E5A93C]/40 bg-[#E5A93C]/10 px-3.5 py-2.5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E5A93C] text-zinc-950">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E5A93C] text-zinc-950">
                 <QrCode className="h-4 w-4" />
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-[#E5A93C]">
-                  Pedido en Local • Código QR Activo
+                  Mesa Enlazada • Atención Directa sin Filas
                 </p>
                 <p className="text-sm font-semibold text-zinc-100">
                   Estás pidiendo desde la Mesa #{resolvedTable.tableNumber}
@@ -128,12 +152,12 @@ export function RestaurantHeader({
             />
             <div>
               <span className="font-semibold text-zinc-100">
-                Servicio a Domicilio:
+                Domicilio y Retiro:
               </span>{" "}
               <span>
                 {tenant.delivery_fee > 0
-                  ? `Envío ${formatCurrency(tenant.delivery_fee)}`
-                  : "Disponible en horario de atención"}
+                  ? `Envío base ${formatCurrency(tenant.delivery_fee)} (según ubicación)`
+                  : "Cotización de envío por ubicación en WhatsApp"}
               </span>
             </div>
           </div>
@@ -145,7 +169,7 @@ export function RestaurantHeader({
               className="h-3.5 w-3.5"
               style={{ color: branding.primaryColor }}
             />
-            Personaliza tus platos y envía tu pedido directo por WhatsApp
+            Efectivo o Transferencia • Ubicación GPS automática
           </span>
           <span className="inline-flex items-center gap-1 text-zinc-300">
             <Phone className="h-3.5 w-3.5 text-emerald-400" />

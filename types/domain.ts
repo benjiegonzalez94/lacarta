@@ -13,6 +13,8 @@ export type ProductModifierGroupRow = Tables<"product_modifier_groups">;
 
 export type OrderType = "delivery" | "pickup" | "dine_in";
 
+export type PaymentMethod = "cash" | "transfer" | "card_soon";
+
 export type OrderStatus =
   | "pending"
   | "confirmed"
@@ -129,6 +131,9 @@ export interface PlaceOrderInput {
   deliveryReference?: string | null;
   notes?: string | null;
   tableToken?: string | null;
+  paymentMethod?: PaymentMethod;
+  deliveryLat?: number | null;
+  deliveryLng?: number | null;
 }
 
 export interface OrderCalculationResult {

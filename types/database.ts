@@ -225,10 +225,13 @@ export type Database = {
           customer_phone: string | null
           delivery_address: string | null
           delivery_fee: number
+          delivery_lat: number | null
+          delivery_lng: number | null
           delivery_reference: string | null
           id: string
           notes: string | null
           order_type: string
+          payment_method: string
           status: string
           subtotal: number
           table_id: string | null
@@ -241,10 +244,13 @@ export type Database = {
           customer_phone?: string | null
           delivery_address?: string | null
           delivery_fee?: number
+          delivery_lat?: number | null
+          delivery_lng?: number | null
           delivery_reference?: string | null
           id?: string
           notes?: string | null
           order_type: string
+          payment_method?: string
           status?: string
           subtotal?: number
           table_id?: string | null
@@ -257,10 +263,13 @@ export type Database = {
           customer_phone?: string | null
           delivery_address?: string | null
           delivery_fee?: number
+          delivery_lat?: number | null
+          delivery_lng?: number | null
           delivery_reference?: string | null
           id?: string
           notes?: string | null
           order_type?: string
+          payment_method?: string
           status?: string
           subtotal?: number
           table_id?: string | null
@@ -415,6 +424,8 @@ export type Database = {
       }
       tenants: {
         Row: {
+          address: string | null
+          bank_details: string | null
           banner_url: string | null
           created_at: string
           delivery_fee: number
@@ -429,6 +440,8 @@ export type Database = {
           slug: string
         }
         Insert: {
+          address?: string | null
+          bank_details?: string | null
           banner_url?: string | null
           created_at?: string
           delivery_fee?: number
@@ -443,6 +456,8 @@ export type Database = {
           slug: string
         }
         Update: {
+          address?: string | null
+          bank_details?: string | null
           banner_url?: string | null
           created_at?: string
           delivery_fee?: number
@@ -469,10 +484,13 @@ export type Database = {
           p_customer_name?: string
           p_customer_phone?: string
           p_delivery_address?: string
+          p_delivery_lat?: number
+          p_delivery_lng?: number
           p_delivery_reference?: string
           p_items: Json
           p_notes?: string
           p_order_type: string
+          p_payment_method?: string
           p_slug: string
           p_table_token?: string
         }

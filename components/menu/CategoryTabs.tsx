@@ -50,8 +50,8 @@ export function CategoryTabs({
   onSearchChange,
 }: CategoryTabsProps) {
   return (
-    <div className="sticky top-0 z-20 border-b border-zinc-800/90 bg-[#0F0F11]/95 backdrop-blur-md">
-      <div className="mx-auto max-w-3xl px-4 py-3">
+    <div className="sticky top-0 z-20 border-b border-zinc-800/90 bg-[#0F0F11]/95 pt-7 backdrop-blur-md sm:pt-0">
+      <div className="mx-auto max-w-3xl px-4 py-2.5 sm:py-3">
         <div className="relative mb-2.5">
           <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-zinc-400" />
           <input

@@ -120,6 +120,9 @@ export async function placePublicOrder(
     p_delivery_reference: input.deliveryReference ?? undefined,
     p_notes: input.notes ?? undefined,
     p_table_token: input.tableToken ?? undefined,
+    p_payment_method: input.paymentMethod ?? "cash",
+    p_delivery_lat: input.deliveryLat ?? undefined,
+    p_delivery_lng: input.deliveryLng ?? undefined,
   });
 
   if (rpcError || !orderId) {
@@ -141,6 +144,9 @@ export async function placePublicOrder(
     customerPhone: input.customerPhone,
     deliveryAddress: input.deliveryAddress,
     deliveryReference: input.deliveryReference,
+    deliveryLat: input.deliveryLat ?? null,
+    deliveryLng: input.deliveryLng ?? null,
+    paymentMethod: input.paymentMethod ?? "cash",
     orderNotes: input.notes,
     items: whatsappLines,
     subtotal: totals.subtotal,

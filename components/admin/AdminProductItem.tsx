@@ -37,114 +37,118 @@ export function AdminProductItem({
   assignedGroupIds,
 }: AdminProductItemProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const assignedGroups = modifierGroups.filter((group) =>
     assignedGroupIds.includes(group.id)
   );
 
   return (
-    <div className="py-3.5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3.5">
-          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-900">
-            {product.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-zinc-600">
-                <ImageIcon className="h-5 w-5" />
-              </div>
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-bold text-zinc-100">
-                {product.name}
-              </span>
-              <Badge variant={product.is_available ? "success" : "danger"}>
-                {product.is_available ? "Disponible" : "Agotado / Oculto"}
-              </Badge>
-              {assignedGroups.map((group) => (
-                <span
-                  key={group.id}
-                  className="inline-flex items-center gap-1 rounded-md border border-[#E5A93C]/30 bg-[#E5A93C]/10 px-2 py-0.5 text-[11px] font-semibold text-[#E5A93C]"
-                >
-                  <SlidersHorizontal className="h-2.5 w-2.5" />
-                  {group.name}
-                </span>
-              ))}
-            </div>
-            {product.description ? (
-              <p className="mt-0.5 line-clamp-2 text-xs text-zinc-400">
-                {product.description}
-              </p>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="mr-1 text-sm font-black text-[#E5A93C]">
-            {formatCurrency(Number(product.price))}
-          </span>
-
-          <button
-            id={`edit-product-toggle-${product.id}`}
-            type="button"
-            onClick={() => setIsEditing((v) => !v)}
-            className="inline-flex items-center gap-1 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E5A93C] hover:text-[#E5A93C]"
-          >
-            {isEditing ? (
-              <>
-                <X className="h-3.5 w-3.5" />
-                <span>Cancelar</span>
-              </>
-            ) : (
-              <>
-                <Pencil className="h-3.5 w-3.5" />
-                <span>Editar</span>
-              </>
-            )}
-          </button>
-
-          <form action={toggleProductAvailabilityAction}>
-            <input type="hidden" name="productId" value={product.id} />
-            <input
-              type="hidden"
-              name="nextAvailable"
-              value={product.is_available ? "false" : "true"}
+    <div className="py-4">
+      <div className="flex items-start gap-3.5">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-900">
+          {product.image_url && !imgError ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.image_url}
+              alt={product.name}
+              onError={() => setImgError(true)}
+              className="h-full w-full object-cover"
             />
-            <button
-              id={`toggle-product-${product.id}`}
-              type="submit"
-              className="rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E5A93C]"
-            >
-              {product.is_available ? "Pausar" : "Activar"}
-            </button>
-          </form>
-
-          <form action={deleteProductAction}>
-            <input type="hidden" name="productId" value={product.id} />
-            <button
-              id={`delete-product-${product.id}`}
-              type="submit"
-              aria-label={`Eliminar ${product.name}`}
-              className="rounded-xl p-1.5 text-zinc-400 hover:bg-red-500/15 hover:text-red-400"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </form>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-zinc-600">
+              <ImageIcon className="h-6 w-6" />
+            </div>
+          )}
         </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h4 className="text-sm font-bold leading-snug text-zinc-100">
+              {product.name}
+            </h4>
+            <span className="shrink-0 rounded-lg bg-[#E5A93C]/15 px-2.5 py-0.5 text-sm font-black text-[#E5A93C]">
+              {formatCurrency(Number(product.price))}
+            </span>
+          </div>
+
+          {product.description ? (
+            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-400">
+              {product.description}
+            </p>
+          ) : null}
+
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <Badge variant={product.is_available ? "success" : "danger"}>
+              {product.is_available ? "Disponible" : "Agotado / Oculto"}
+            </Badge>
+            {assignedGroups.map((group) => (
+              <span
+                key={group.id}
+                className="inline-flex items-center gap-1 rounded-md border border-[#E5A93C]/30 bg-[#E5A93C]/10 px-2 py-0.5 text-[11px] font-semibold text-[#E5A93C]"
+              >
+                <SlidersHorizontal className="h-2.5 w-2.5 shrink-0" />
+                <span>{group.name}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-zinc-800/50 pt-2.5">
+        <button
+          id={`edit-product-toggle-${product.id}`}
+          type="button"
+          onClick={() => setIsEditing((v) => !v)}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E5A93C] hover:text-[#E5A93C]"
+        >
+          {isEditing ? (
+            <>
+              <X className="h-3.5 w-3.5" />
+              <span>Cancelar</span>
+            </>
+          ) : (
+            <>
+              <Pencil className="h-3.5 w-3.5" />
+              <span>Editar</span>
+            </>
+          )}
+        </button>
+
+        <form action={toggleProductAvailabilityAction}>
+          <input type="hidden" name="productId" value={product.id} />
+          <input
+            type="hidden"
+            name="nextAvailable"
+            value={product.is_available ? "false" : "true"}
+          />
+          <button
+            id={`toggle-product-${product.id}`}
+            type="submit"
+            className="rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E5A93C]"
+          >
+            {product.is_available ? "Pausar" : "Activar"}
+          </button>
+        </form>
+
+        <form action={deleteProductAction}>
+          <input type="hidden" name="productId" value={product.id} />
+          <button
+            id={`delete-product-${product.id}`}
+            type="submit"
+            aria-label={`Eliminar ${product.name}`}
+            className="inline-flex items-center gap-1 rounded-xl border border-zinc-800 bg-[#202024] px-2.5 py-1.5 text-xs text-zinc-400 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-400"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </form>
       </div>
 
       {isEditing ? (
         <form
           action={async (formData) => {
             await updateProductAction(formData);
+            setImgError(false);
             setIsEditing(false);
           }}
           className="mt-3 grid grid-cols-1 gap-3 rounded-2xl border border-[#E5A93C]/30 bg-[#141418] p-4 sm:grid-cols-2"

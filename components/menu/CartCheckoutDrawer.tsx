@@ -2,7 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import {
+  Banknote,
+  Building2,
   CheckCircle2,
+  CreditCard,
   ExternalLink,
   Loader2,
   MessageCircle,
@@ -12,12 +15,14 @@ import {
   X,
 } from "lucide-react";
 import { CartItemRow } from "@/components/menu/CartItemRow";
+import { DeliveryLocationPicker } from "@/components/menu/DeliveryLocationPicker";
 import { calculateOrderTotals } from "@/lib/services/order.service";
 import { formatCurrency } from "@/lib/utils/currency";
 import type {
   CartItem,
   OrderItemPayload,
   OrderType,
+  PaymentMethod,
   PlaceOrderResult,
   ResolvedTable,
   TenantRow,
@@ -63,10 +68,13 @@ export function CartCheckoutDrawer({
   const [orderType, setOrderType] = useState<OrderType>(
     resolvedTable ? "dine_in" : "delivery"
   );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryReference, setDeliveryReference] = useState("");
+  const [deliveryLat, setDeliveryLat] = useState<number | null>(null);
+  const [deliveryLng, setDeliveryLng] = useState<number | null>(null);
   const [orderNotes, setOrderNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -101,6 +109,7 @@ export function CartCheckoutDrawer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderType: effectiveOrderType,
+          paymentMethod,
           items: itemsPayload,
           customerName: customerName.trim() || null,
           customerPhone: customerPhone.trim() || null,
@@ -112,6 +121,8 @@ export function CartCheckoutDrawer({
             effectiveOrderType === "delivery"
               ? deliveryReference.trim() || null
               : null,
+          deliveryLat: effectiveOrderType === "delivery" ? deliveryLat : null,
+          deliveryLng: effectiveOrderType === "delivery" ? deliveryLng : null,
           notes: orderNotes.trim() || null,
           tableToken: resolvedTable?.qrToken ?? null,
         }),
@@ -132,7 +143,9 @@ export function CartCheckoutDrawer({
 
       setCreatedOrder(body.data);
       onClearCart();
-      window.open(body.data.whatsappUrl, "_blank", "noopener,noreferrer");
+      if (!resolvedTable) {
+        window.open(body.data.whatsappUrl, "_blank", "noopener,noreferrer");
+      }
     } catch {
       setErrorMsg("Error de red al registrar el pedido. Intenta nuevamente.");
     } finally {
@@ -147,8 +160,8 @@ export function CartCheckoutDrawer({
       aria-labelledby="checkout-drawer-title"
       className="fixed inset-0 z-50 flex justify-end bg-black/75 backdrop-blur-xs"
     >
-      <div className="flex h-full w-full max-w-lg flex-col border-l border-zinc-800 bg-[#18181B] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
+      <div className="flex h-full w-full max-w-lg flex-col border-l border-zinc-800 bg-[#18181B] pt-[env(safe-area-inset-top)] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-zinc-800 px-5 pt-6 pb-4 sm:pt-4">
           <h2
             id="checkout-drawer-title"
             className="text-lg font-black text-zinc-50"
@@ -176,15 +189,35 @@ export function CartCheckoutDrawer({
                 Orden #{createdOrder.orderId.slice(0, 8).toUpperCase()}
               </p>
               <h3 className="mt-1 text-xl font-black text-zinc-50">
-                Pedido listo para enviar
+                {resolvedTable
+                  ? `¡Pedido enviado a cocina (Mesa #${resolvedTable.tableNumber})!`
+                  : "Pedido listo para enviar por WhatsApp"}
               </h3>
-              <p className="mt-2 text-xs text-zinc-400">
-                Tu orden quedó registrada en {tenant.name} por un total de{" "}
-                <strong className="text-zinc-200">
-                  {formatCurrency(createdOrder.total)}
-                </strong>
-                . Si WhatsApp no se abrió automáticamente, pulsa el botón de
-                abajo:
+              <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                {resolvedTable ? (
+                  <>
+                    Tu pedido ya llegó al panel de{" "}
+                    <strong className="text-zinc-200">{tenant.name}</strong> por{" "}
+                    <strong className="text-[#E5A93C]">
+                      {formatCurrency(createdOrder.total)}
+                    </strong>{" "}
+                    y está siendo preparado para tu{" "}
+                    <strong className="text-zinc-200">
+                      Mesa #{resolvedTable.tableNumber}
+                    </strong>
+                    .
+                  </>
+                ) : (
+                  <>
+                    Tu orden por{" "}
+                    <strong className="text-zinc-200">
+                      {formatCurrency(createdOrder.total)}
+                    </strong>{" "}
+                    fue generada con tu ubicación y método de pago. Si WhatsApp
+                    no se abrió automáticamente, toca el botón para que el
+                    vendedor cotice el envío y te confirme los datos de pago:
+                  </>
+                )}
               </p>
             </div>
 
@@ -196,9 +229,21 @@ export function CartCheckoutDrawer({
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#22C55E] px-5 py-3.5 text-sm font-black text-zinc-950 transition-colors hover:bg-[#16A34A]"
             >
               <MessageCircle className="h-5 w-5" />
-              <span>Enviar Pedido por WhatsApp</span>
+              <span>
+                {resolvedTable
+                  ? "Notificar también por WhatsApp (Opcional)"
+                  : "Enviar Pedido y Ubicación por WhatsApp"}
+              </span>
               <ExternalLink className="h-4 w-4" />
             </a>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-800/60 px-4 py-2.5 text-xs font-bold text-zinc-200 hover:border-[#E5A93C]"
+            >
+              Volver al Menú
+            </button>
           </div>
         ) : cart.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
@@ -231,18 +276,19 @@ export function CartCheckoutDrawer({
                   <div className="flex items-center gap-2 text-xs font-bold text-[#E5A93C]">
                     <QrCode className="h-4 w-4" />
                     <span>
-                      Modalidad: Pedido en Mesa #{resolvedTable.tableNumber}
+                      Enlazado a Mesa #{resolvedTable.tableNumber} •{" "}
+                      {tenant.name}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-zinc-300">
-                    Tu pedido será preparado para tu mesa sin necesidad de
-                    dirección de envío.
+                    Tu pedido llegará directo al restaurante para ser preparado
+                    y entregado en tu mesa sin hacer filas.
                   </p>
                 </div>
               ) : (
                 <div>
                   <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-zinc-400">
-                    Tipo de entrega
+                    Modalidad de entrega
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -269,11 +315,71 @@ export function CartCheckoutDrawer({
                       }`}
                     >
                       <Store className="h-4 w-4" />
-                      <span>Retiro en Local</span>
+                      <span>Retirar en Local</span>
                     </button>
                   </div>
                 </div>
               )}
+
+              <div>
+                <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  Método de pago
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    id="payment-method-cash-btn"
+                    type="button"
+                    onClick={() => setPaymentMethod("cash")}
+                    className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-xs font-bold transition-all ${
+                      paymentMethod === "cash"
+                        ? "border-[#E5A93C] bg-[#E5A93C]/15 text-[#E5A93C]"
+                        : "border-zinc-800 bg-[#202024] text-zinc-300"
+                    }`}
+                  >
+                    <Banknote className="h-4 w-4" />
+                    <span>Efectivo</span>
+                  </button>
+
+                  <button
+                    id="payment-method-transfer-btn"
+                    type="button"
+                    onClick={() => setPaymentMethod("transfer")}
+                    className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-xs font-bold transition-all ${
+                      paymentMethod === "transfer"
+                        ? "border-[#E5A93C] bg-[#E5A93C]/15 text-[#E5A93C]"
+                        : "border-zinc-800 bg-[#202024] text-zinc-300"
+                    }`}
+                  >
+                    <Building2 className="h-4 w-4" />
+                    <span>Transferencia</span>
+                  </button>
+
+                  <button
+                    id="payment-method-card-soon-btn"
+                    type="button"
+                    disabled
+                    className="flex cursor-not-allowed flex-col items-center justify-center gap-1 rounded-xl border border-zinc-800/70 bg-[#141417] p-2 text-[11px] font-semibold text-zinc-500 opacity-75"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    <span>Tarjeta</span>
+                    <span className="rounded bg-zinc-800 px-1.5 py-0.2 text-[9px] text-zinc-400">
+                      Pronto
+                    </span>
+                  </button>
+                </div>
+
+                {paymentMethod === "transfer" ? (
+                  <div className="mt-2 rounded-xl border border-zinc-800 bg-[#141418] p-3 text-xs text-zinc-300">
+                    <p className="font-bold text-[#E5A93C]">
+                      🏦 Pago por Transferencia Bancaria
+                    </p>
+                    <p className="mt-1 whitespace-pre-line text-[11px] text-zinc-400">
+                      {tenant.bank_details ||
+                        "Al enviar el pedido por WhatsApp, el local te confirmará el total final con envío y sus datos bancarios."}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
 
               <div className="space-y-3">
                 <div>
@@ -281,7 +387,7 @@ export function CartCheckoutDrawer({
                     htmlFor="checkout-customer-name"
                     className="mb-1 block text-xs font-semibold text-zinc-300"
                   >
-                    Tu nombre {resolvedTable ? "(opcional)" : "*"}
+                    Tu nombre {resolvedTable ? "(para identificar tu pedido)" : "*"}
                   </label>
                   <input
                     id="checkout-customer-name"
@@ -316,12 +422,26 @@ export function CartCheckoutDrawer({
 
                 {effectiveOrderType === "delivery" ? (
                   <>
+                    <DeliveryLocationPicker
+                      lat={deliveryLat}
+                      lng={deliveryLng}
+                      onChangeCoordinates={(lat, lng) => {
+                        setDeliveryLat(lat);
+                        setDeliveryLng(lng);
+                      }}
+                      onSuggestedAddress={(suggested) => {
+                        setDeliveryAddress((prev) =>
+                          prev.trim().length === 0 ? suggested : prev
+                        );
+                      }}
+                    />
+
                     <div>
                       <label
                         htmlFor="checkout-delivery-address"
                         className="mb-1 block text-xs font-semibold text-zinc-300"
                       >
-                        Dirección de entrega *
+                        Dirección / Calles de entrega *
                       </label>
                       <input
                         id="checkout-delivery-address"
@@ -338,7 +458,7 @@ export function CartCheckoutDrawer({
                         htmlFor="checkout-delivery-ref"
                         className="mb-1 block text-xs font-semibold text-zinc-300"
                       >
-                        Referencia de ubicación
+                        Referencia de la casa / edificio
                       </label>
                       <input
                         id="checkout-delivery-ref"
@@ -357,14 +477,14 @@ export function CartCheckoutDrawer({
                     htmlFor="checkout-order-notes"
                     className="mb-1 block text-xs font-semibold text-zinc-300"
                   >
-                    Observaciones del pedido (opcional)
+                    Observaciones adicionales (opcional)
                   </label>
                   <input
                     id="checkout-order-notes"
                     type="text"
                     value={orderNotes}
                     onChange={(e) => setOrderNotes(e.target.value)}
-                    placeholder="Ej: Pago con transferencia / efectivo..."
+                    placeholder="Ej: Sin cebolla, traer vuelto de $20..."
                     className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
                   />
                 </div>
@@ -383,21 +503,21 @@ export function CartCheckoutDrawer({
             <div className="border-t border-zinc-800 bg-[#131316] px-5 py-4">
               <div className="mb-3 space-y-1 text-xs">
                 <div className="flex justify-between text-zinc-400">
-                  <span>Subtotal</span>
+                  <span>Subtotal productos</span>
                   <span>{formatCurrency(totals.subtotal)}</span>
                 </div>
                 {effectiveOrderType === "delivery" ? (
                   <div className="flex justify-between text-zinc-400">
-                    <span>Costo de envío</span>
+                    <span>Envío base (a cotizar según mapa)</span>
                     <span>
                       {totals.deliveryFee > 0
                         ? formatCurrency(totals.deliveryFee)
-                        : "Por confirmar"}
+                        : "Según ubicación"}
                     </span>
                   </div>
                 ) : null}
                 <div className="flex justify-between pt-1 text-base font-black text-zinc-50">
-                  <span>Total a pagar</span>
+                  <span>Total estimado</span>
                   <span className="text-[#E5A93C]">
                     {formatCurrency(totals.total)}
                   </span>
@@ -413,16 +533,19 @@ export function CartCheckoutDrawer({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Registrando pedido...</span>
+                    <span>Procesando pedido...</span>
+                  </>
+                ) : resolvedTable ? (
+                  <>
+                    <QrCode className="h-5 w-5" />
+                    <span>
+                      Enviar Pedido a Cocina (Mesa #{resolvedTable.tableNumber})
+                    </span>
                   </>
                 ) : (
                   <>
                     <MessageCircle className="h-5 w-5" />
-                    <span>
-                      {resolvedTable
-                        ? `Pedir a Mesa #${resolvedTable.tableNumber} y Enviar a WhatsApp`
-                        : "Confirmar y Enviar por WhatsApp"}
-                    </span>
+                    <span>Enviar Pedido y Ubicación por WhatsApp</span>
                   </>
                 )}
               </button>

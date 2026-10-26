@@ -69,6 +69,18 @@ export const TenantSettingsSchema = z.object({
     .number()
     .min(0, "El costo de envío no puede ser negativo.")
     .max(100, "Costo de envío fuera de rango."),
+  address: z
+    .string()
+    .trim()
+    .max(300, "Máximo 300 caracteres.")
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+  bankDetails: z
+    .string()
+    .trim()
+    .max(800, "Máximo 800 caracteres.")
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
   primaryColor: z
     .string()
     .trim()

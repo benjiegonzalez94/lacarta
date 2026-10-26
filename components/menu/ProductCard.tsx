@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Flame, Plus, Sparkles, Utensils } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -16,6 +17,7 @@ export function ProductCard({
   quantityInCart,
   onSelectProduct,
 }: ProductCardProps) {
+  const [imgError, setImgError] = useState(false);
   const { meta, modifierGroups } = product;
   const requiresCustomization = modifierGroups.length > 0;
 
@@ -29,12 +31,13 @@ export function ProductCard({
     >
       <div>
         <div className="relative h-44 w-full overflow-hidden bg-zinc-900">
-          {product.image_url ? (
+          {product.image_url && !imgError ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={product.image_url}
               alt={product.name}
               loading="lazy"
+              onError={() => setImgError(true)}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (

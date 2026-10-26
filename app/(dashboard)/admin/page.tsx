@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import { ExternalLink, MapPin, MessageCircle } from "lucide-react";
 import { updateOrderStatusAction } from "@/app/(dashboard)/admin/actions";
+import { AdminLiveOrdersHeader } from "@/components/admin/AdminLiveOrdersHeader";
 import { Badge } from "@/components/ui/Badge";
 import {
   getAdminDashboardData,
@@ -7,7 +9,12 @@ import {
 } from "@/lib/services/admin.service";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils/currency";
-import type { OrderStatus } from "@/types/domain";
+import {
+  buildGoogleMapsPinUrl,
+  buildSellerConfirmationWhatsAppUrl,
+  PAYMENT_METHOD_LABELS,
+} from "@/lib/whatsapp";
+import type { OrderStatus, PaymentMethod } from "@/types/domain";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "Pendiente",
@@ -39,9 +46,19 @@ async function AdminOverviewContent() {
     (p) => p.is_available
   ).length;
 
+  const tableNumberById = new Map(
+    data.tables.map((t) => [t.id, t.table_number])
+  );
+
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+    <div className="space-y-6">
+      <AdminLiveOrdersHeader
+        tenantId={tenant.id}
+        tenantSlug={tenant.slug}
+        tenantName={tenant.name}
+      />
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-2xl border border-zinc-800 bg-[#18181B] p-4">
           <p className="text-xs text-zinc-400">Pedidos registrados</p>
           <p className="mt-1 text-2xl font-black text-zinc-50">
@@ -72,37 +89,73 @@ async function AdminOverviewContent() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-black uppercase tracking-tight text-zinc-50">
-              Pedidos Recientes
+              Pedidos Recientes en Tiempo Real
             </h1>
             <p className="text-xs text-zinc-400">
-              Órdenes registradas vía menú público y códigos QR en mesa
+              Órdenes de Mesas QR (atención inmediata) y pedidos a Domicilio /
+              Retiro con ubicación y método de pago
             </p>
           </div>
         </div>
 
         {data.orders.length === 0 ? (
           <div className="rounded-2xl border border-zinc-800 bg-[#18181B] p-8 text-center text-sm text-zinc-400">
-            Aún no se han registrado pedidos. Realiza una prueba desde el menú
-            público{" "}
-            <span className="font-mono text-zinc-200">/{tenant.slug}</span>.
+            Aún no se han registrado pedidos. Comparte tu link{" "}
+            <span className="font-mono text-zinc-200">/{tenant.slug}</span> o
+            escanea una mesa QR.
           </div>
         ) : (
           <div className="space-y-3">
             {data.orders.map((order) => {
               const status = order.status as OrderStatus;
+              const paymentMethod = (order.payment_method ||
+                "cash") as PaymentMethod;
+              const tableNum = order.table_id
+                ? tableNumberById.get(order.table_id)
+                : null;
+              const hasGps =
+                typeof order.delivery_lat === "number" &&
+                typeof order.delivery_lng === "number";
+
+              const replyWhatsAppUrl = order.customer_phone
+                ? buildSellerConfirmationWhatsAppUrl({
+                    customerPhone: order.customer_phone,
+                    customerName: order.customer_name,
+                    restaurantName: tenant.name,
+                    orderId: order.id,
+                    orderType: order.order_type,
+                    paymentMethod,
+                    subtotal: Number(order.subtotal),
+                    deliveryFee: Number(order.delivery_fee),
+                    total: Number(order.total),
+                    bankDetails: tenant.bank_details,
+                  })
+                : null;
+
               return (
                 <div
                   key={order.id}
                   className="rounded-2xl border border-zinc-800 bg-[#18181B] p-4"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-800 pb-3">
-                    <div>
+                    <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-mono text-xs font-bold text-[#E5A93C]">
                           #{order.id.slice(0, 8).toUpperCase()}
                         </span>
+                        <Badge
+                          variant={
+                            order.order_type === "dine_in" ? "primary" : "muted"
+                          }
+                        >
+                          {order.order_type === "dine_in" && tableNum
+                            ? `🍽️ Mesa #${tableNum}`
+                            : (ORDER_TYPE_TEXT[order.order_type] ??
+                              order.order_type)}
+                        </Badge>
                         <Badge variant="muted">
-                          {ORDER_TYPE_TEXT[order.order_type] ?? order.order_type}
+                          {PAYMENT_METHOD_LABELS[paymentMethod] ??
+                            "💵 Efectivo"}
                         </Badge>
                         <Badge
                           variant={
@@ -116,14 +169,18 @@ async function AdminOverviewContent() {
                           {STATUS_LABELS[status] ?? status}
                         </Badge>
                       </div>
-                      <p className="mt-1 text-xs text-zinc-300">
+
+                      <p className="text-xs text-zinc-300">
                         {order.customer_name
                           ? `Cliente: ${order.customer_name}`
-                          : "Pedido en local"}{" "}
+                          : tableNum
+                            ? `Comensal en Mesa #${tableNum}`
+                            : "Pedido en local"}{" "}
                         {order.customer_phone
                           ? `• Tel: ${order.customer_phone}`
                           : ""}
                       </p>
+
                       {order.delivery_address ? (
                         <p className="text-xs text-zinc-400">
                           Dirección: {order.delivery_address}
@@ -132,9 +189,42 @@ async function AdminOverviewContent() {
                             : ""}
                         </p>
                       ) : null}
+
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        {hasGps ? (
+                          <a
+                            href={buildGoogleMapsPinUrl(
+                              Number(order.delivery_lat),
+                              Number(order.delivery_lng)
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#E5A93C]/40 bg-[#E5A93C]/10 px-2.5 py-1 text-[11px] font-bold text-[#E5A93C] hover:bg-[#E5A93C]/20"
+                          >
+                            <MapPin className="h-3 w-3" />
+                            <span>Ver Ubicación GPS en Mapa</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : null}
+
+                        {replyWhatsAppUrl ? (
+                          <a
+                            href={replyWhatsAppUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/25"
+                          >
+                            <MessageCircle className="h-3 w-3" />
+                            <span>
+                              Responder con Total y Datos Bancarios
+                            </span>
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : null}
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <div className="text-right">
                         <span className="text-xs text-zinc-400">Total</span>
                         <p className="text-base font-black text-[#E5A93C]">
@@ -178,7 +268,7 @@ async function AdminOverviewContent() {
                     {order.items.map((item) => (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between"
+                        className="flex items-start justify-between gap-2"
                       >
                         <span>
                           <strong>{item.quantity}x</strong> {item.product_name}
@@ -189,7 +279,7 @@ async function AdminOverviewContent() {
                             </span>
                           ) : null}
                         </span>
-                        <span className="font-semibold text-zinc-200">
+                        <span className="shrink-0 font-semibold text-zinc-200">
                           {formatCurrency(Number(item.line_total))}
                         </span>
                       </li>

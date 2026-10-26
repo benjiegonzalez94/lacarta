@@ -77,6 +77,22 @@ export const PlaceOrderSchema = z
       .max(120)
       .nullable()
       .optional(),
+    paymentMethod: z
+      .enum(["cash", "transfer", "card_soon"])
+      .optional()
+      .default("cash"),
+    deliveryLat: z
+      .number()
+      .min(-90)
+      .max(90)
+      .nullable()
+      .optional(),
+    deliveryLng: z
+      .number()
+      .min(-180)
+      .max(180)
+      .nullable()
+      .optional(),
   })
   .superRefine((data, ctx) => {
     if (data.orderType === "dine_in") {
