@@ -48,6 +48,7 @@ async function HomeHubContent() {
       id: t.id,
       slug: t.slug,
       name: t.name,
+      branchName: t.branch_name,
       slogan: t.slogan || "Arte en Sabor",
       phone: t.phone,
       address: t.address,

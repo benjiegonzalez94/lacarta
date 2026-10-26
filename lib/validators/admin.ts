@@ -53,6 +53,12 @@ export const TenantSettingsSchema = z.object({
     .trim()
     .min(1, "El nombre del restaurante es obligatorio.")
     .max(120, "Máximo 120 caracteres."),
+  branchName: z
+    .string()
+    .trim()
+    .min(1, "El distintivo de sucursal es obligatorio (ej. Sucursal Iñaquito, Matriz Norte).")
+    .max(80, "Máximo 80 caracteres.")
+    .default("Matriz Principal"),
   slogan: z
     .string()
     .trim()
@@ -98,6 +104,43 @@ export const TenantSettingsSchema = z.object({
     .string()
     .trim()
     .max(800, "Máximo 800 caracteres.")
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+  cashPaymentsEnabled: z.boolean().default(true),
+  transferPaymentsEnabled: z.boolean().default(true),
+  cardPaymentsEnabled: z.boolean().default(false),
+  cardGateway: z.string().trim().default("payphone"),
+  cardMerchantId: z
+    .string()
+    .trim()
+    .max(120)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+  settlementBankName: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+  settlementAccountType: z
+    .enum(["Ahorros", "Corriente"])
+    .default("Ahorros"),
+  settlementAccountNumber: z
+    .string()
+    .trim()
+    .max(50)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+  settlementHolderName: z
+    .string()
+    .trim()
+    .max(120)
+    .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+  settlementHolderId: z
+    .string()
+    .trim()
+    .max(30)
     .optional()
     .transform((v) => (v && v.length > 0 ? v : null)),
   primaryColor: z

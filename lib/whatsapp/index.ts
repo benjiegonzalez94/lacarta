@@ -37,6 +37,7 @@ const ORDER_TYPE_LABELS: Record<OrderType, string> = {
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: "💵 Efectivo",
   transfer: "🏦 Transferencia Bancaria",
+  card: "💳 Tarjeta en App",
   card_soon: "💳 Tarjeta Nacional",
 };
 

@@ -11,12 +11,13 @@ export type ModifierGroupRow = Tables<"modifier_groups">;
 export type ModifierOptionRow = Tables<"modifier_options">;
 export type ProductModifierGroupRow = Tables<"product_modifier_groups">;
 export type ProfileRow = Tables<"profiles">;
+export type CustomerCardRow = Tables<"customer_cards">;
 
 export type OrderType = "delivery" | "pickup" | "dine_in";
 
 export type ArrivalMode = "on_the_way" | "at_table";
 
-export type PaymentMethod = "cash" | "transfer" | "card_soon";
+export type PaymentMethod = "cash" | "transfer" | "card" | "card_soon";
 
 export type OrderStatus =
   | "pending"
@@ -145,6 +146,9 @@ export interface PlaceOrderInput {
   deliveryLng?: number | null;
   paymentProofUrl?: string | null;
   arrivalMode?: ArrivalMode;
+  cardBrand?: string | null;
+  cardLast4?: string | null;
+  paymentReference?: string | null;
 }
 
 export interface OrderCalculationResult {
@@ -160,6 +164,7 @@ export interface PlaceOrderResult {
   total: number;
   whatsappUrl: string;
   whatsappMessage: string;
+  pickupPin?: string;
 }
 
 export interface CustomerProfile {

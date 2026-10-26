@@ -340,7 +340,6 @@ export function PublicMenuClient({
         <CartCheckoutDrawer
           tenant={menu.tenant}
           cart={activeCart}
-          resolvedTable={resolvedTable}
           onClose={() => setIsCartOpen(false)}
           onUpdateQty={handleUpdateCartQty}
           onRemoveItem={handleRemoveCartItem}

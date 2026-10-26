@@ -44,8 +44,6 @@ export async function placePublicOrder(
     throw new Error("TENANT_NOT_FOUND");
   }
 
-  const tableNumber: number | null = input.tableNumber ?? null;
-
   const productIds = Array.from(new Set(input.items.map((i) => i.product_id)));
   const allOptionIds = Array.from(
     new Set(input.items.flatMap((i) => i.option_ids ?? []))
@@ -103,13 +101,16 @@ export async function placePublicOrder(
     p_customer_name: input.customerName ?? undefined,
     p_customer_phone: input.customerPhone ?? undefined,
     p_notes: input.notes ?? undefined,
-    p_table_token: input.tableToken ?? undefined,
+    p_table_token: undefined,
     p_payment_method: input.paymentMethod ?? "cash",
     p_payment_proof_url: input.paymentProofUrl ?? undefined,
-    p_arrival_mode: input.arrivalMode ?? "on_the_way",
-    p_table_number: tableNumber ?? undefined,
+    p_arrival_mode: "at_table",
+    p_table_number: undefined,
     p_customer_cedula: input.customerCedula ?? undefined,
     p_customer_avatar_url: input.customerAvatarUrl ?? undefined,
+    p_card_brand: input.cardBrand ?? undefined,
+    p_card_last4: input.cardLast4 ?? undefined,
+    p_payment_reference: input.paymentReference ?? undefined,
   });
 
   if (rpcError || !orderId) {
@@ -122,7 +123,7 @@ export async function placePublicOrder(
     restaurantName: tenant.name,
     orderId,
     orderType: input.orderType,
-    tableNumber,
+    tableNumber: null,
     customerName: input.customerName,
     customerPhone: input.customerPhone,
     paymentMethod: input.paymentMethod ?? "cash",

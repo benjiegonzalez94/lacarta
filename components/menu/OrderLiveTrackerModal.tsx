@@ -6,7 +6,8 @@ import {
   CheckCircle2,
   ChefHat,
   Clock,
-  Hash,
+  CreditCard,
+  Landmark,
   RefreshCw,
   ShoppingBag,
   Utensils,
@@ -27,12 +28,17 @@ export interface LiveOrderStatusData {
   order_id: string;
   tenant_slug: string;
   tenant_name: string;
+  tenant_branch?: string;
   tenant_phone: string;
   order_type: string;
   status: string;
   arrival_mode: string;
   table_number: number | null;
   payment_method: string;
+  payment_status?: string;
+  card_brand?: string | null;
+  card_last4?: string | null;
+  payment_reference?: string | null;
   has_payment_proof: boolean;
   pickup_pin: string;
   customer_name: string | null;
@@ -61,8 +67,8 @@ const STEPS = [
   },
   {
     key: "ready",
-    label: "¡Listo para Retirar / Servir!",
-    desc: "Acércate a la barra o recíbelo en tu mesa.",
+    label: "¡Listo para Retirar en Barra!",
+    desc: "Acércate a la barra con tu PIN a retirar y siéntate en la mesa que prefieras.",
     icon: BellRing,
   },
   {
@@ -87,8 +93,6 @@ export function OrderLiveTrackerModal({
 }: OrderLiveTrackerModalProps) {
   const [order, setOrder] = useState<LiveOrderStatusData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [manualTableInput, setManualTableInput] = useState("");
-  const [assigningTable, setAssigningTable] = useState(false);
 
   async function fetchStatus() {
     try {
@@ -105,12 +109,17 @@ export function OrderLiveTrackerModal({
           order_id: row.order_id,
           tenant_slug: row.tenant_slug,
           tenant_name: row.tenant_name,
+          tenant_branch: row.tenant_branch ?? undefined,
           tenant_phone: row.tenant_phone,
           order_type: row.order_type,
           status: row.status,
           arrival_mode: row.arrival_mode,
           table_number: row.table_number,
           payment_method: row.payment_method,
+          payment_status: row.payment_status ?? undefined,
+          card_brand: row.card_brand ?? null,
+          card_last4: row.card_last4 ?? null,
+          payment_reference: row.payment_reference ?? null,
           has_payment_proof: row.has_payment_proof,
           pickup_pin: row.pickup_pin,
           customer_name: row.customer_name,
@@ -155,23 +164,6 @@ export function OrderLiveTrackerModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
-  async function handleSaveManualTable() {
-    const num = Number.parseInt(manualTableInput.trim(), 10);
-    if (!order || Number.isNaN(num) || num < 1 || assigningTable) return;
-    setAssigningTable(true);
-    try {
-      const supabase = createClient();
-      await supabase.rpc("assign_order_table_number", {
-        p_order_id: order.order_id,
-        p_table_number: num,
-      });
-      setManualTableInput("");
-      await fetchStatus();
-    } finally {
-      setAssigningTable(false);
-    }
-  }
-
   const currentStep = order ? getStepIndex(order.status) : 0;
   const isReady = order?.status === "ready";
   const isCancelled =
@@ -179,42 +171,41 @@ export function OrderLiveTrackerModal({
 
   return (
     <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="live-tracker-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 pt-10 backdrop-blur-sm"
     >
-      <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-zinc-800 bg-[#18181B] shadow-2xl">
+      <div className="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-zinc-800 bg-[#18181B] text-zinc-50 shadow-2xl sm:rounded-3xl">
         <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`flex h-9 w-9 items-center justify-center rounded-xl text-white ${
-                isReady ? "animate-bounce bg-emerald-500" : "bg-[#E11D48]"
-              }`}
-            >
-              {isReady ? (
-                <BellRing className="h-5 w-5" />
-              ) : (
-                <ChefHat className="h-5 w-5" />
-              )}
-            </div>
-            <h2
-              id="live-tracker-title"
-              className="text-base font-black uppercase text-zinc-50"
-            >
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            </span>
+            <h2 className="text-sm font-black uppercase tracking-wider text-zinc-100">
               Estado de tu Pedido
             </h2>
           </div>
-
-          <button
-            id="close-live-tracker-btn"
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar seguimiento"
-            className="rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              id="refresh-order-tracker-btn"
+              type="button"
+              onClick={() => void fetchStatus()}
+              aria-label="Actualizar estado"
+              className="rounded-full p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+            <button
+              id="close-order-tracker-btn"
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar monitor"
+              className="rounded-full p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
@@ -224,6 +215,7 @@ export function OrderLiveTrackerModal({
             </div>
           ) : (
             <>
+              {/* Order Highlight Card */}
               <div
                 className={`rounded-2xl border p-4 ${
                   isReady
@@ -234,18 +226,15 @@ export function OrderLiveTrackerModal({
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <span className="text-[11px] font-bold uppercase text-zinc-400">
-                      {order.tenant_name} • #
+                      {order.tenant_name}{" "}
+                      {order.tenant_branch ? `(${order.tenant_branch}) ` : ""}• #
                       {order.order_id.slice(0, 6).toUpperCase()}
                     </span>
                     <div className="mt-1 flex items-center gap-1.5 text-sm font-black text-zinc-50">
                       {order.order_type === "dine_in" ? (
                         <>
                           <Utensils className="h-4 w-4 text-[#FB7185]" />
-                          <span>
-                            {order.table_number
-                              ? `Para Servir • Mesa #${order.table_number}`
-                              : "Para Servir (En camino)"}
-                          </span>
+                          <span>Para Servir (Retiro en Barra)</span>
                         </>
                       ) : (
                         <>
@@ -256,25 +245,26 @@ export function OrderLiveTrackerModal({
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1.5 text-center">
+                  <div className="rounded-xl border border-zinc-700 bg-zinc-950 px-3.5 py-1.5 text-center">
                     <span className="block text-[9px] font-bold uppercase text-zinc-400">
-                      PIN
+                      PIN RETIRO
                     </span>
-                    <span className="font-mono text-base font-black text-[#FB7185]">
+                    <span className="font-mono text-lg font-black text-[#FB7185]">
                       {order.pickup_pin}
                     </span>
                   </div>
                 </div>
 
                 {isReady ? (
-                  <div className="mt-3 rounded-xl bg-emerald-500 px-3.5 py-2.5 text-xs font-black text-zinc-950">
-                    {order.table_number
-                      ? `🔔 ¡LISTO! Te lo llevarán a la Mesa #${order.table_number} o retíralo en barra.`
-                      : `🔔 ¡LISTO PARA RETIRAR! Acércate a la barra con el PIN ${order.pickup_pin}.`}
+                  <div className="mt-3 rounded-xl bg-emerald-500 px-3.5 py-2.5 text-xs font-black text-zinc-950 animate-pulse">
+                    🔔 ¡LISTO PARA RETIRAR! Acércate a la barra con tu PIN {order.pickup_pin}
+                    {order.payment_method === "cash" ? " para pagar en efectivo y recibir tu comida." : " a retirar tu pedido."}
+                    {" "}Luego eres libre de sentarte en cualquier mesa disponible.
                   </div>
                 ) : null}
               </div>
 
+              {/* Progress Steps */}
               {!isCancelled ? (
                 <div className="space-y-2 rounded-2xl border border-zinc-800 bg-[#141418] p-3.5">
                   {STEPS.map((step, idx) => {
@@ -284,7 +274,7 @@ export function OrderLiveTrackerModal({
                     return (
                       <div
                         key={step.key}
-                        className={`flex items-center gap-3 rounded-xl p-2 ${
+                        className={`flex items-center gap-3 rounded-xl p-2.5 ${
                           isCurrent
                             ? "border border-[#E11D48]/50 bg-[#E11D48]/10"
                             : done
@@ -317,77 +307,70 @@ export function OrderLiveTrackerModal({
                 </div>
               ) : null}
 
-              {/* Manual table input if customer arrived and sat down */}
-              {!isCancelled && order.status !== "completed" ? (
-                <div className="rounded-2xl border border-zinc-800 bg-[#141418] p-3.5">
-                  <label
-                    htmlFor="tracker-manual-table-input"
-                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-200"
-                  >
-                    <Hash className="h-3.5 w-3.5 text-[#E11D48]" />
-                    <span>
-                      {order.table_number
-                        ? `Estás en la Mesa #${order.table_number} (¿Cambiaste de mesa?)`
-                        : "¿Ya estás en una mesa? Digita el número:"}
-                    </span>
-                  </label>
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      id="tracker-manual-table-input"
-                      type="number"
-                      min="1"
-                      max="500"
-                      inputMode="numeric"
-                      value={manualTableInput}
-                      onChange={(e) => setManualTableInput(e.target.value)}
-                      placeholder="Ej: 4"
-                      className="min-w-0 flex-1 rounded-xl border border-zinc-800 bg-[#202024] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500"
-                    />
-                    <button
-                      id="tracker-save-table-btn"
-                      type="button"
-                      disabled={!manualTableInput.trim() || assigningTable}
-                      onClick={handleSaveManualTable}
-                      className="rounded-xl bg-[#E11D48] px-3.5 py-2 text-xs font-black text-white hover:bg-[#BE123C] disabled:opacity-50"
-                    >
-                      Guardar Mesa
-                    </button>
-                  </div>
+              {/* Payment Summary */}
+              <div className="space-y-2 rounded-2xl border border-zinc-800 bg-[#141418] p-3.5 text-xs">
+                <div className="flex items-center justify-between text-zinc-300">
+                  <span className="font-semibold">Método de Pago:</span>
+                  <span className="font-black">
+                    {order.payment_method === "card"
+                      ? `Tarjeta (${order.card_brand || "Crédito"} •••• ${order.card_last4 || "4242"})`
+                      : order.payment_method === "transfer"
+                        ? "Transferencia Bancaria"
+                        : "Efectivo en Barra"}
+                  </span>
                 </div>
-              ) : null}
 
-              <div className="rounded-2xl border border-zinc-800 bg-[#141418] p-3.5">
-                <div className="mb-2 flex items-center justify-between text-xs font-bold text-zinc-200">
-                  <span>Resumen</span>
-                  <span className="text-[#FB7185]">
+                {order.payment_method === "card" ? (
+                  <div className="flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 p-2 text-[11px] text-violet-200">
+                    <CreditCard className="h-3.5 w-3.5" />
+                    <span>Pago confirmado en la App • Ref: {order.payment_reference || "PAY-DIRECT"}</span>
+                  </div>
+                ) : order.payment_method === "transfer" ? (
+                  <div className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-[11px] text-emerald-200">
+                    <Landmark className="h-3.5 w-3.5" />
+                    <span>Comprobante adjuntado • En verificación por cocina</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-[11px] text-emerald-200">
+                    <span>Pagas {formatCurrency(order.total)} en efectivo en barra</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Order Items */}
+              <div className="space-y-1.5 rounded-2xl border border-zinc-800 bg-[#141418] p-3.5">
+                <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400">
+                  Resumen de tu Pedido
+                </p>
+                <div className="divide-y divide-zinc-800">
+                  {order.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between py-1.5 text-xs"
+                    >
+                      <div>
+                        <span className="font-bold text-zinc-100">
+                          {item.quantity}x {item.product_name}
+                        </span>
+                        {item.notes ? (
+                          <p className="text-[10px] text-zinc-400">
+                            {item.notes}
+                          </p>
+                        ) : null}
+                      </div>
+                      <span className="font-bold text-zinc-200">
+                        {formatCurrency(Number(item.line_total))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between border-t border-zinc-800 pt-2 text-xs font-black text-zinc-50">
+                  <span>Total</span>
+                  <span className="text-sm text-[#FB7185]">
                     {formatCurrency(order.total)}
                   </span>
                 </div>
-                <ul className="space-y-1 text-xs text-zinc-300">
-                  {order.items.map((item) => (
-                    <li
-                      key={item.id}
-                      className="flex items-start justify-between gap-2"
-                    >
-                      <span>
-                        <strong>{item.quantity}x</strong> {item.product_name}
-                      </span>
-                      <span className="shrink-0 text-zinc-400">
-                        {formatCurrency(Number(item.line_total))}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
               </div>
-
-              <button
-                type="button"
-                onClick={() => void fetchStatus()}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] py-2.5 text-xs font-bold text-zinc-200 hover:border-[#E11D48]"
-              >
-                <RefreshCw className="h-3.5 w-3.5 text-[#E11D48]" />
-                <span>Actualizar estado</span>
-              </button>
             </>
           )}
         </div>

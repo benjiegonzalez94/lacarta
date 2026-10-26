@@ -71,21 +71,8 @@ export const PlaceOrderSchema = z
       .max(500, "Las notas del pedido son demasiado largas.")
       .nullable()
       .optional(),
-    tableToken: z
-      .string()
-      .trim()
-      .max(120)
-      .nullable()
-      .optional(),
-    tableNumber: z
-      .number()
-      .int("El número de mesa debe ser entero.")
-      .min(1, "El número de mesa debe ser mayor a 0.")
-      .max(500, "Número de mesa fuera de rango.")
-      .nullable()
-      .optional(),
     paymentMethod: z
-      .enum(["cash", "transfer", "card_soon"])
+      .enum(["cash", "transfer", "card", "card_soon"])
       .optional()
       .default("cash"),
     paymentProofUrl: z
@@ -94,10 +81,15 @@ export const PlaceOrderSchema = z
       .max(2000, "URL de comprobante demasiado larga.")
       .nullable()
       .optional(),
+    cardBrand: z.string().trim().max(30).nullable().optional(),
+    cardLast4: z.string().trim().max(4).nullable().optional(),
+    paymentReference: z.string().trim().max(100).nullable().optional(),
     arrivalMode: z
       .enum(["on_the_way", "at_table"])
       .optional()
-      .default("on_the_way"),
+      .default("at_table"),
+    tableNumber: z.number().nullable().optional(),
+    tableToken: z.string().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     if (!data.customerName || data.customerName.trim().length < 2) {
@@ -125,20 +117,7 @@ export const PlaceOrderSchema = z
         code: "custom",
         path: ["paymentProofUrl"],
         message:
-          "Adjunta la captura o foto del comprobante de transferencia bancaria.",
-      });
-    }
-
-    if (
-      data.arrivalMode === "at_table" &&
-      data.orderType === "dine_in" &&
-      !data.tableNumber &&
-      !data.tableToken
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["tableNumber"],
-        message: "Digita el número de mesa donde te encuentras.",
+          "Adjunta la captura o foto del comprobante de transferencia bancaria antes de confirmar.",
       });
     }
   });

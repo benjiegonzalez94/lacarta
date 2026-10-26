@@ -3,14 +3,14 @@
 import { useRef, useState, type FormEvent } from "react";
 import {
   Banknote,
-  Building2,
   CheckCircle2,
+  Copy,
   CreditCard,
-  Hash,
   IdCard,
   ImageUp,
+  Landmark,
   Loader2,
-  ShieldCheck,
+  Phone,
   ShoppingBag,
   Utensils,
   X,
@@ -20,24 +20,23 @@ import {
   readStoredCustomerProfile,
   saveCustomerProfileToStorage,
 } from "@/components/menu/CustomerProfileDrawer";
+import { CustomerSavedCardsManager } from "@/components/menu/CustomerSavedCardsManager";
 import { calculateOrderTotals } from "@/lib/services/order.service";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils/currency";
 import type {
-  ArrivalMode,
   CartItem,
+  CustomerCardRow,
   OrderItemPayload,
   OrderType,
   PaymentMethod,
   PlaceOrderResult,
-  ResolvedTable,
   TenantRow,
 } from "@/types/domain";
 
 export interface CartCheckoutDrawerProps {
   tenant: TenantRow;
   cart: CartItem[];
-  resolvedTable?: ResolvedTable | null;
   onClose: () => void;
   onUpdateQty: (cartItemId: string, delta: number) => void;
   onRemoveItem: (cartItemId: string) => void;
@@ -66,7 +65,6 @@ function formatCartItemNotes(item: CartItem): string | null {
 export function CartCheckoutDrawer({
   tenant,
   cart,
-  resolvedTable,
   onClose,
   onUpdateQty,
   onRemoveItem,
@@ -74,13 +72,27 @@ export function CartCheckoutDrawer({
   onOrderCreated,
 }: CartCheckoutDrawerProps) {
   const [orderType, setOrderType] = useState<OrderType>("dine_in");
-  const [manualTableInput, setManualTableInput] = useState<string>(
-    resolvedTable ? String(resolvedTable.tableNumber) : ""
-  );
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("transfer");
+
+  // Determine available payment methods from tenant configuration
+  const cashAllowed = tenant.cash_payments_enabled ?? true;
+  const transferAllowed = tenant.transfer_payments_enabled ?? true;
+  const cardAllowed = tenant.card_payments_enabled ?? false;
+
+  const initialPaymentMethod: PaymentMethod = transferAllowed
+    ? "transfer"
+    : cashAllowed
+      ? "cash"
+      : cardAllowed
+        ? "card"
+        : "transfer";
+
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>(initialPaymentMethod);
+  const [selectedCard, setSelectedCard] = useState<CustomerCardRow | null>(null);
+
   const [paymentProofUrl, setPaymentProofUrl] = useState<string>("");
   const [uploadingProof, setUploadingProof] = useState(false);
-  const [cashCommitment, setCashCommitment] = useState(false);
+  const [copiedBank, setCopiedBank] = useState(false);
 
   const [customerName, setCustomerName] = useState(
     () => readStoredCustomerProfile().name
@@ -99,20 +111,14 @@ export function CartCheckoutDrawer({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const proofInputRef = useRef<HTMLInputElement | null>(null);
-
-  const parsedTableNum =
-    manualTableInput.trim().length > 0
-      ? Number.parseInt(manualTableInput.trim(), 10)
-      : null;
-  const validTableNum =
-    parsedTableNum && !Number.isNaN(parsedTableNum) && parsedTableNum >= 1
-      ? parsedTableNum
-      : null;
-
-  const effectiveArrivalMode: ArrivalMode =
-    orderType === "dine_in" && validTableNum ? "at_table" : "on_the_way";
-
   const totals = calculateOrderTotals(cart);
+
+  function handleCopyBankDetails() {
+    if (!tenant.bank_details) return;
+    void navigator.clipboard.writeText(tenant.bank_details);
+    setCopiedBank(true);
+    setTimeout(() => setCopiedBank(false), 2000);
+  }
 
   async function handleUploadReceipt(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -176,14 +182,13 @@ export function CartCheckoutDrawer({
     e.preventDefault();
     if (cart.length === 0 || isSubmitting) return;
 
-    if (
-      paymentMethod === "cash" &&
-      effectiveArrivalMode === "on_the_way" &&
-      !cashCommitment
-    ) {
-      setErrorMsg(
-        "Por favor confirma la casilla de compromiso de asistir al local a retirar tu pedido."
-      );
+    if (paymentMethod === "transfer" && !paymentProofUrl.trim()) {
+      setErrorMsg("Por favor realiza la transferencia bancaria y adjunta el comprobante antes de confirmar.");
+      return;
+    }
+
+    if (paymentMethod === "card" && !selectedCard) {
+      setErrorMsg("Por favor selecciona o agrega una tarjeta de crédito o débito para realizar el pago.");
       return;
     }
 
@@ -198,22 +203,28 @@ export function CartCheckoutDrawer({
     }));
 
     try {
+      const cardRef =
+        paymentMethod === "card"
+          ? `PAY-${Math.random().toString(36).substring(2, 9).toUpperCase()}`
+          : null;
+
       const response = await fetch(`/api/v1/tenants/${tenant.slug}/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderType,
-          arrivalMode: effectiveArrivalMode,
           paymentMethod,
           paymentProofUrl:
             paymentMethod === "transfer" ? paymentProofUrl.trim() || null : null,
+          cardBrand: paymentMethod === "card" ? selectedCard?.card_brand ?? null : null,
+          cardLast4: paymentMethod === "card" ? selectedCard?.last4 ?? null : null,
+          paymentReference: cardRef,
           items: itemsPayload,
           customerName: customerName.trim() || null,
           customerCedula: customerCedula.trim() || null,
           customerPhone: customerPhone.trim() || null,
           customerAvatarUrl: customerAvatarUrl || null,
           notes: orderNotes.trim() || null,
-          tableNumber: orderType === "dine_in" ? validTableNum : null,
         }),
       });
 
@@ -248,7 +259,7 @@ export function CartCheckoutDrawer({
         name: customerName.trim() || existingProfile.name,
         cedula: customerCedula.trim() || existingProfile.cedula,
         phone: customerPhone.trim() || existingProfile.phone,
-        avatarUrl: existingProfile.avatarUrl,
+        avatarUrl: customerAvatarUrl || existingProfile.avatarUrl,
         savedOrders: updatedOrders,
       });
 
@@ -256,336 +267,373 @@ export function CartCheckoutDrawer({
       onClose();
       onOrderCreated(body.data.orderId);
     } catch {
-      setErrorMsg("Error de red al registrar el pedido. Intenta nuevamente.");
-    } finally {
+      setErrorMsg("Ocurrió un error al enviar el pedido. Inténtalo de nuevo.");
       setIsSubmitting(false);
     }
   }
 
   return (
     <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="checkout-drawer-title"
-      className="fixed inset-0 z-50 flex justify-end bg-black/75 backdrop-blur-xs"
+      aria-labelledby="cart-drawer-title"
     >
-      <div className="flex h-full w-full max-w-lg flex-col border-l border-zinc-800 bg-[#18181B] pt-[env(safe-area-inset-top)] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-5 pt-6 pb-4 sm:pt-4">
-          <h2
-            id="checkout-drawer-title"
-            className="text-base font-black uppercase text-zinc-50"
-          >
-            Confirmar Pedido
-          </h2>
+      <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-zinc-800 bg-[#18181B] text-zinc-50 shadow-2xl sm:rounded-3xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
+          <div>
+            <h2 id="cart-drawer-title" className="text-base font-black text-zinc-50">
+              Tu Pedido en {tenant.name}
+            </h2>
+            <p className="text-[11px] text-zinc-400">
+              {tenant.branch_name ? `${tenant.branch_name} • ` : ""}Retiro directo en barra
+            </p>
+          </div>
           <button
-            id="close-checkout-drawer-btn"
+            id="close-cart-drawer-btn"
             type="button"
             onClick={onClose}
             aria-label="Cerrar carrito"
-            className="rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+            className="rounded-full p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {cart.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-            <p className="text-sm font-semibold text-zinc-300">
-              Tu carrito está vacío
-            </p>
-          </div>
-        ) : (
-          <form
-            onSubmit={handleSubmitOrder}
-            className="flex flex-1 flex-col overflow-hidden"
-          >
-            <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-              <div className="space-y-2">
-                {cart.map((item) => (
-                  <CartItemRow
-                    key={item.cartItemId}
-                    item={item}
-                    onUpdateQty={onUpdateQty}
-                    onRemove={onRemoveItem}
-                  />
-                ))}
-              </div>
+        {/* Content */}
+        <div className="flex-1 space-y-4 overflow-y-auto p-5">
+          {/* Cart Items */}
+          {cart.length === 0 ? (
+            <div className="py-8 text-center text-xs text-zinc-500">
+              No tienes productos en el carrito.
+            </div>
+          ) : (
+            <div className="divide-y divide-zinc-800/80 rounded-2xl border border-zinc-800 bg-[#121215] p-3">
+              {cart.map((item) => (
+                <CartItemRow
+                  key={item.cartItemId}
+                  item={item}
+                  onUpdateQty={onUpdateQty}
+                  onRemove={onRemoveItem}
+                />
+              ))}
+            </div>
+          )}
 
-              {/* 1. Dine-in vs Takeaway */}
+          {cart.length > 0 ? (
+            <form onSubmit={handleSubmitOrder} className="space-y-4">
+              {/* Order Type: Dine-in vs Takeaway */}
               <div>
-                <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-zinc-400">
-                  Modalidad en el Local
-                </span>
+                <label className="mb-1.5 block text-xs font-bold text-zinc-300">
+                  ¿Cómo deseas tu pedido? (Retiro en Barra)
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    id="order-type-dinein-btn"
+                    id="order-type-dine-in-btn"
                     type="button"
                     onClick={() => setOrderType("dine_in")}
-                    className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-black transition-all ${
+                    className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-black transition-colors ${
                       orderType === "dine_in"
-                        ? "border-[#E11D48] bg-[#E11D48] text-white"
-                        : "border-zinc-800 bg-[#202024] text-zinc-300"
+                        ? "border-[#E11D48] bg-[#E11D48]/15 text-white"
+                        : "border-zinc-800 bg-[#121215] text-zinc-400 hover:border-zinc-700"
                     }`}
                   >
-                    <Utensils className="h-4 w-4" />
-                    <span>Para Servir</span>
+                    <Utensils className="h-4 w-4 text-[#FB7185]" />
+                    <span>Para Servir (En mesa)</span>
                   </button>
+
                   <button
                     id="order-type-pickup-btn"
                     type="button"
                     onClick={() => setOrderType("pickup")}
-                    className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-black transition-all ${
+                    className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-black transition-colors ${
                       orderType === "pickup"
-                        ? "border-[#E11D48] bg-[#E11D48] text-white"
-                        : "border-zinc-800 bg-[#202024] text-zinc-300"
+                        ? "border-[#E11D48] bg-[#E11D48]/15 text-white"
+                        : "border-zinc-800 bg-[#121215] text-zinc-400 hover:border-zinc-700"
                     }`}
                   >
-                    <ShoppingBag className="h-4 w-4" />
+                    <ShoppingBag className="h-4 w-4 text-[#FB7185]" />
                     <span>Para Llevar</span>
                   </button>
                 </div>
+                <p className="mt-1 text-[11px] text-zinc-400">
+                  {orderType === "dine_in"
+                    ? "Te acercas a la barra a retirar cuando esté listo y te sientas en la mesa libre que desees."
+                    : "Tu pedido saldrá empacado listo para llevar."}
+                </p>
+              </div>
 
-                {orderType === "dine_in" ? (
-                  <div className="mt-2.5 rounded-2xl border border-zinc-800 bg-[#141418] p-3">
-                    <label
-                      htmlFor="manual-table-number-input"
-                      className="mb-1 flex items-center gap-1.5 text-xs font-bold text-zinc-200"
-                    >
-                      <Hash className="h-3.5 w-3.5 text-[#E11D48]" />
-                      <span>
-                        Número de Mesa (si ya estás en el local)
-                      </span>
-                    </label>
+              {/* Customer Identity */}
+              <div className="space-y-2.5 rounded-2xl border border-zinc-800 bg-[#121215] p-3.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                  Datos de quien retira
+                </span>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                  <div className="sm:col-span-1">
                     <input
-                      id="manual-table-number-input"
-                      type="number"
-                      min="1"
-                      max="500"
-                      inputMode="numeric"
-                      value={manualTableInput}
-                      onChange={(e) => setManualTableInput(e.target.value)}
-                      placeholder="Digita tu mesa (ej. 4) o déjalo vacío si vas en camino"
-                      className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
+                      id="checkout-customer-name"
+                      type="text"
+                      required
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Tu Nombre"
+                      className="w-full rounded-xl border border-zinc-800 bg-[#18181B] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
                     />
+                  </div>
+                  <div>
+                    <div className="relative">
+                      <IdCard className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+                      <input
+                        id="checkout-customer-cedula"
+                        type="text"
+                        inputMode="numeric"
+                        value={customerCedula}
+                        onChange={(e) => setCustomerCedula(e.target.value)}
+                        placeholder="Cédula"
+                        className="w-full rounded-xl border border-zinc-800 bg-[#18181B] py-2 pl-8 pr-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="relative">
+                      <Phone className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+                      <input
+                        id="checkout-customer-phone"
+                        type="tel"
+                        required
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="WhatsApp"
+                        className="w-full rounded-xl border border-zinc-800 bg-[#18181B] py-2 pl-8 pr-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Method Selector */}
+              <div className="space-y-3">
+                <label className="block text-xs font-bold text-zinc-300">
+                  Forma de Pago
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {transferAllowed ? (
+                    <button
+                      id="payment-method-transfer-btn"
+                      type="button"
+                      onClick={() => setPaymentMethod("transfer")}
+                      className={`flex flex-col items-center rounded-xl border p-2.5 text-center text-xs font-bold transition-colors ${
+                        paymentMethod === "transfer"
+                          ? "border-[#E11D48] bg-[#E11D48]/15 text-white"
+                          : "border-zinc-800 bg-[#121215] text-zinc-400 hover:border-zinc-700"
+                      }`}
+                    >
+                      <Landmark className="h-4 w-4 text-[#FB7185]" />
+                      <span className="mt-1 text-[11px]">Transferencia</span>
+                    </button>
+                  ) : null}
+
+                  {cardAllowed ? (
+                    <button
+                      id="payment-method-card-btn"
+                      type="button"
+                      onClick={() => setPaymentMethod("card")}
+                      className={`flex flex-col items-center rounded-xl border p-2.5 text-center text-xs font-bold transition-colors ${
+                        paymentMethod === "card"
+                          ? "border-[#E11D48] bg-[#E11D48]/15 text-white"
+                          : "border-zinc-800 bg-[#121215] text-zinc-400 hover:border-zinc-700"
+                      }`}
+                    >
+                      <CreditCard className="h-4 w-4 text-violet-400" />
+                      <span className="mt-1 text-[11px]">Tarjeta en App</span>
+                    </button>
+                  ) : null}
+
+                  {cashAllowed ? (
+                    <button
+                      id="payment-method-cash-btn"
+                      type="button"
+                      onClick={() => setPaymentMethod("cash")}
+                      className={`flex flex-col items-center rounded-xl border p-2.5 text-center text-xs font-bold transition-colors ${
+                        paymentMethod === "cash"
+                          ? "border-[#E11D48] bg-[#E11D48]/15 text-white"
+                          : "border-zinc-800 bg-[#121215] text-zinc-400 hover:border-zinc-700"
+                      }`}
+                    >
+                      <Banknote className="h-4 w-4 text-emerald-400" />
+                      <span className="mt-1 text-[11px]">Efectivo en Barra</span>
+                    </button>
+                  ) : null}
+                </div>
+
+                {/* TRANSFER FLOW */}
+                {paymentMethod === "transfer" ? (
+                  <div className="space-y-3 rounded-2xl border border-zinc-800 bg-[#121215] p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-zinc-300">
+                        Total a transferir:
+                      </span>
+                      <span className="text-base font-black text-[#FB7185]">
+                        {formatCurrency(totals.total)}
+                      </span>
+                    </div>
+
+                    {tenant.bank_details ? (
+                      <div className="rounded-xl border border-zinc-800 bg-[#18181B] p-3 text-xs">
+                        <div className="flex items-center justify-between text-zinc-400">
+                          <span className="font-bold">Datos Bancarios del Local:</span>
+                          <button
+                            type="button"
+                            onClick={handleCopyBankDetails}
+                            className="inline-flex items-center gap-1 font-bold text-[#FB7185] hover:underline"
+                          >
+                            <Copy className="h-3 w-3" />
+                            <span>{copiedBank ? "¡Copiado!" : "Copiar"}</span>
+                          </button>
+                        </div>
+                        <p className="mt-1.5 whitespace-pre-wrap font-mono text-[11px] text-zinc-200">
+                          {tenant.bank_details}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {/* Receipt Upload */}
+                    <div>
+                      <input
+                        ref={proofInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => void handleUploadReceipt(e)}
+                      />
+                      {paymentProofUrl ? (
+                        <div className="flex items-center justify-between rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-2.5">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                            <span className="text-xs font-bold text-emerald-200">
+                              Comprobante adjuntado
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => proofInputRef.current?.click()}
+                            className="text-xs font-semibold text-zinc-300 underline"
+                          >
+                            Cambiar
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          id="checkout-upload-proof-btn"
+                          type="button"
+                          disabled={uploadingProof}
+                          onClick={() => proofInputRef.current?.click()}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#E11D48]/60 bg-[#E11D48]/10 px-3 py-3 text-xs font-bold text-[#FB7185] hover:bg-[#E11D48]/15"
+                        >
+                          {uploadingProof ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ImageUp className="h-4 w-4" />
+                          )}
+                          <span>
+                            {uploadingProof
+                              ? "Cargando comprobante..."
+                              : "Subir foto / captura del comprobante de transferencia"}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* CARD FLOW */}
+                {paymentMethod === "card" ? (
+                  <div className="space-y-3 rounded-2xl border border-zinc-800 bg-[#121215] p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-zinc-300">
+                        Total a cobrar:
+                      </span>
+                      <span className="text-base font-black text-violet-400">
+                        {formatCurrency(totals.total)}
+                      </span>
+                    </div>
+
+                    <CustomerSavedCardsManager
+                      compact={true}
+                      selectedCardId={selectedCard?.id}
+                      onSelectCard={setSelectedCard}
+                    />
+                  </div>
+                ) : null}
+
+                {/* CASH FLOW */}
+                {paymentMethod === "cash" ? (
+                  <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-200">
+                    <div className="flex items-center gap-2 font-bold">
+                      <Banknote className="h-4 w-4 text-emerald-400" />
+                      <span>Pago en Barra</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-zinc-300">
+                      Pagas el total de{" "}
+                      <strong className="text-white">
+                        {formatCurrency(totals.total)}
+                      </strong>{" "}
+                      en efectivo cuando te acerques a retirar tu pedido en la barra.
+                    </p>
                   </div>
                 ) : null}
               </div>
 
-              {/* 2. Payment Method */}
+              {/* Order Notes */}
               <div>
-                <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-zinc-400">
-                  Método de Pago
-                </span>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    id="payment-method-transfer-btn"
-                    type="button"
-                    onClick={() => setPaymentMethod("transfer")}
-                    className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-xs font-bold transition-all ${
-                      paymentMethod === "transfer"
-                        ? "border-[#E11D48] bg-[#E11D48]/15 text-[#FB7185]"
-                        : "border-zinc-800 bg-[#202024] text-zinc-300"
-                    }`}
-                  >
-                    <Building2 className="h-4 w-4" />
-                    <span>Transferencia</span>
-                  </button>
-
-                  <button
-                    id="payment-method-cash-btn"
-                    type="button"
-                    onClick={() => setPaymentMethod("cash")}
-                    className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-xs font-bold transition-all ${
-                      paymentMethod === "cash"
-                        ? "border-[#E11D48] bg-[#E11D48]/15 text-[#FB7185]"
-                        : "border-zinc-800 bg-[#202024] text-zinc-300"
-                    }`}
-                  >
-                    <Banknote className="h-4 w-4" />
-                    <span>Efectivo</span>
-                  </button>
-
-                  <button
-                    id="payment-method-card-soon-btn"
-                    type="button"
-                    disabled
-                    className="flex cursor-not-allowed flex-col items-center justify-center gap-1 rounded-xl border border-zinc-800/70 bg-[#141417] p-2 text-[11px] font-semibold text-zinc-500 opacity-70"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    <span>Tarjeta</span>
-                  </button>
-                </div>
-
-                {paymentMethod === "transfer" ? (
-                  <div className="mt-2.5 space-y-2.5 rounded-2xl border border-zinc-800 bg-[#141418] p-3 text-xs text-zinc-300">
-                    <div>
-                      <p className="font-bold text-[#FB7185]">
-                        Datos Bancarios • {tenant.name}
-                      </p>
-                      <p className="mt-1 whitespace-pre-line text-[11px] text-zinc-300">
-                        {tenant.bank_details ||
-                          "Realiza la transferencia por el total y adjunta el comprobante."}
-                      </p>
-                    </div>
-
-                    <input
-                      ref={proofInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleUploadReceipt}
-                      className="hidden"
-                    />
-                    <button
-                      id="upload-transfer-proof-btn"
-                      type="button"
-                      disabled={uploadingProof}
-                      onClick={() => proofInputRef.current?.click()}
-                      className={`flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-black transition-all ${
-                        paymentProofUrl
-                          ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-300"
-                          : "border-dashed border-[#E11D48]/60 bg-[#202024] text-zinc-100 hover:border-[#E11D48]"
-                      }`}
-                    >
-                      {uploadingProof ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Adjuntando...</span>
-                        </>
-                      ) : paymentProofUrl ? (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                          <span>Comprobante adjuntado</span>
-                        </>
-                      ) : (
-                        <>
-                          <ImageUp className="h-4 w-4 text-[#E11D48]" />
-                          <span>Adjuntar Comprobante *</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-2.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
-                    <div className="flex items-center gap-1.5 font-bold text-amber-300">
-                      <ShieldCheck className="h-4 w-4 shrink-0" />
-                      <span>Compromiso de Retiro en Efectivo</span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-amber-200/90">
-                      {effectiveArrivalMode === "on_the_way"
-                        ? "Pre-orden en camino en efectivo habilitada hasta $15.00 en cuentas nuevas. No retirar un pedido bloquea futuros pagos en efectivo."
-                        : `Pagarás en efectivo en el local (Mesa #${validTableNum}).`}
-                    </p>
-                    {effectiveArrivalMode === "on_the_way" ? (
-                      <label className="mt-2 flex cursor-pointer items-start gap-2 rounded-xl bg-black/25 p-2 text-[11px] font-semibold text-zinc-100">
-                        <input
-                          id="cash-commitment-checkbox"
-                          type="checkbox"
-                          checked={cashCommitment}
-                          onChange={(e) => setCashCommitment(e.target.checked)}
-                          className="mt-0.5 h-4 w-4 rounded accent-[#E11D48]"
-                        />
-                        <span>
-                          Confirmo que iré al local a retirar y pagar mi pedido.
-                        </span>
-                      </label>
-                    ) : null}
-                  </div>
-                )}
-              </div>
-
-              {/* 3. Customer Identity */}
-              <div className="space-y-2.5">
-                <span className="block text-xs font-bold uppercase tracking-wider text-zinc-400">
-                  Tus Datos
-                </span>
                 <input
-                  id="checkout-customer-name"
-                  type="text"
-                  required
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Nombre y Apellido *"
-                  className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
-                />
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="relative">
-                    <IdCard className="pointer-events-none absolute top-2.5 left-2.5 h-3.5 w-3.5 text-zinc-500" />
-                    <input
-                      id="checkout-customer-cedula"
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={13}
-                      required
-                      value={customerCedula}
-                      onChange={(e) => setCustomerCedula(e.target.value)}
-                      placeholder="Cédula *"
-                      className="w-full rounded-xl border border-zinc-800 bg-[#202024] py-2 pr-3 pl-8 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
-                    />
-                  </div>
-
-                  <input
-                    id="checkout-customer-phone"
-                    type="tel"
-                    required
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="Celular *"
-                    className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
-                  />
-                </div>
-
-                <input
-                  id="checkout-order-notes"
+                  id="checkout-notes-input"
                   type="text"
                   value={orderNotes}
                   onChange={(e) => setOrderNotes(e.target.value)}
-                  placeholder="Nota opcional (ej. llego en 10 min, sin cebolla)"
-                  className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
+                  placeholder="Instrucciones especiales (sin cebolla, salsa extra...)"
+                  className="w-full rounded-xl border border-zinc-800 bg-[#121215] px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
                 />
               </div>
 
               {errorMsg ? (
                 <div
                   role="alert"
-                  className="rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300"
+                  className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300"
                 >
                   {errorMsg}
                 </div>
               ) : null}
-            </div>
 
-            <div className="border-t border-zinc-800 bg-[#131316] px-5 py-4">
-              <div className="mb-3 flex items-center justify-between text-base font-black text-zinc-50">
-                <span>Total</span>
-                <span className="text-[#FB7185]">
-                  {formatCurrency(totals.total)}
-                </span>
-              </div>
-
+              {/* Submit Button */}
               <button
-                id="submit-invenue-order-btn"
+                id="confirm-place-order-btn"
                 type="submit"
-                disabled={isSubmitting || uploadingProof}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#E11D48] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#E11D48]/30 transition-colors hover:bg-[#BE123C] disabled:opacity-60"
+                disabled={
+                  isSubmitting ||
+                  uploadingProof ||
+                  (paymentMethod === "transfer" && !paymentProofUrl) ||
+                  (paymentMethod === "card" && !selectedCard)
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#E11D48] px-5 py-3.5 text-sm font-black text-white shadow-lg shadow-[#E11D48]/30 hover:bg-[#BE123C] disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Confirmando...</span>
+                    <span>Enviando pedido a cocina...</span>
                   </>
+                ) : paymentMethod === "transfer" && !paymentProofUrl ? (
+                  <span>Adjunta el comprobante para confirmar</span>
+                ) : paymentMethod === "card" ? (
+                  <span>Pagar {formatCurrency(totals.total)} con Tarjeta y Enviar</span>
                 ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>
-                      Confirmar Pedido ({formatCurrency(totals.total)})
-                    </span>
-                  </>
+                  <span>Confirmar Pedido ({formatCurrency(totals.total)})</span>
                 )}
               </button>
-            </div>
-          </form>
-        )}
+            </form>
+          ) : null}
+        </div>
       </div>
     </div>
   );

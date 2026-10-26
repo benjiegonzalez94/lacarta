@@ -74,6 +74,11 @@ export function RestaurantHeader({
               <h1 className="text-xl font-black uppercase tracking-tight text-zinc-50 sm:text-2xl">
                 {tenant.name}
               </h1>
+              {tenant.branch_name ? (
+                <span className="rounded-lg border border-zinc-700 bg-zinc-800/90 px-2.5 py-0.5 text-xs font-bold text-zinc-300">
+                  {tenant.branch_name}
+                </span>
+              ) : null}
               <Badge variant={schedule.isOpen ? "success" : "secondary"}>
                 {schedule.statusLabel}
               </Badge>

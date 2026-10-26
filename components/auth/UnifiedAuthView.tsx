@@ -50,6 +50,7 @@ export function UnifiedAuthView({
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [restaurantName, setRestaurantName] = useState("");
+  const [branchName, setBranchName] = useState("");
   const [restaurantAddress, setRestaurantAddress] = useState("");
 
   const [detectingGps, setDetectingGps] = useState(false);
@@ -141,6 +142,7 @@ export function UnifiedAuthView({
         latitude,
         longitude,
         restaurantName: restaurantName.trim(),
+        branchName: branchName.trim() || undefined,
         restaurantAddress: restaurantAddress.trim(),
       });
 
@@ -346,6 +348,19 @@ export function UnifiedAuthView({
                       value={restaurantName}
                       onChange={(e) => setRestaurantName(e.target.value)}
                       placeholder="Ej. Asados El Rincón"
+                      className="w-full rounded-xl border border-zinc-800 bg-[#121215] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold text-zinc-300">
+                      Distintivo de Sucursal / Sector (Opcional)
+                    </label>
+                    <input
+                      id="auth-branch-name-input"
+                      type="text"
+                      value={branchName}
+                      onChange={(e) => setBranchName(e.target.value)}
+                      placeholder="Ej. Matriz Norte, Sucursal Iñaquito, CC El Jardín"
                       className="w-full rounded-xl border border-zinc-800 bg-[#121215] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
                     />
                   </div>

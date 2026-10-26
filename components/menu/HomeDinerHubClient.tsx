@@ -32,6 +32,7 @@ export interface DirectoryTenantItem {
   id: string;
   slug: string;
   name: string;
+  branchName?: string | null;
   slogan: string;
   phone: string;
   address: string | null;
@@ -271,7 +272,7 @@ export function HomeDinerHubClient({
                   Pedido activo en {recentOrder.tenantName}
                 </p>
                 <p className="text-[11px] text-zinc-400">
-                  Toca para ver el estado o digitar tu número de mesa
+                  Toca para ver el estado y tu código de retiro en barra
                 </p>
               </div>
             </div>
@@ -353,6 +354,11 @@ export function HomeDinerHubClient({
                           <h2 className="text-base font-black text-zinc-50">
                             {tenant.name}
                           </h2>
+                          {tenant.branchName ? (
+                            <span className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-300">
+                              {tenant.branchName}
+                            </span>
+                          ) : null}
                           <span
                             className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                               tenant.isOpen

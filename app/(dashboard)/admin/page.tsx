@@ -3,9 +3,10 @@ import {
   BellRing,
   CheckCircle2,
   ChefHat,
+  CreditCard,
   ExternalLink,
   FileCheck2,
-  ShieldAlert,
+  Landmark,
   User,
 } from "lucide-react";
 import { updateOrderStatusAction } from "@/app/(dashboard)/admin/actions";
@@ -17,14 +18,13 @@ import {
 } from "@/lib/services/admin.service";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils/currency";
-import { PAYMENT_METHOD_LABELS } from "@/lib/whatsapp";
 import type { OrderStatus, PaymentMethod } from "@/types/domain";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "Recibido",
   confirmed: "Confirmado",
   preparing: "En preparación",
-  ready: "¡Listo para retirar / servir!",
+  ready: "¡Listo para retirar en barra!",
   completed: "Entregado",
   cancelled: "Cancelado",
   no_show: "No se presentó (Efectivo bloqueado)",
@@ -45,10 +45,6 @@ async function AdminOverviewContent() {
   const availableProductsCount = data.products.filter(
     (p) => p.is_available
   ).length;
-
-  const tableNumberById = new Map(
-    data.tables.map((t) => [t.id, t.table_number])
-  );
 
   const activeOrdersCount = data.orders.filter((o) =>
     ["pending", "confirmed", "preparing", "ready"].includes(o.status)
@@ -86,8 +82,11 @@ async function AdminOverviewContent() {
       <section>
         <div className="mb-3">
           <h1 className="text-base font-black uppercase tracking-tight text-zinc-50">
-            Pedidos Recibidos
+            Comandas de Cocina y Retiros en Barra
           </h1>
+          <p className="text-xs text-zinc-400">
+            Verifica el comprobante si es transferencia, prepara el pedido y márcalo listo para que el cliente se acerque a la barra.
+          </p>
         </div>
 
         {data.orders.length === 0 ? (
@@ -98,21 +97,12 @@ async function AdminOverviewContent() {
           <div className="space-y-3">
             {data.orders.map((order) => {
               const status = order.status as OrderStatus;
-              const paymentMethod = (order.payment_method ||
-                "cash") as PaymentMethod;
-              const tableNum =
-                order.manual_table_number ??
-                (order.table_id ? tableNumberById.get(order.table_id) : null);
-              const arrivalMode = order.arrival_mode || "on_the_way";
+              const paymentMethod = (order.payment_method || "cash") as PaymentMethod;
               const pickupPin = order.pickup_pin || "----";
 
-              let modalityLabel = "🛍️ Para Llevar";
-              if (order.order_type === "dine_in") {
-                modalityLabel = tableNum
-                  ? `🍽️ Mesa #${tableNum}`
-                  : "🚗 Para Servir (En camino)";
-              }
-
+              const isCard = paymentMethod === "card";
+              const isTransfer = paymentMethod === "transfer";
+              
               return (
                 <div
                   key={order.id}
@@ -125,7 +115,7 @@ async function AdminOverviewContent() {
                   }`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-800 pb-3">
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-lg bg-zinc-900 px-2.5 py-1 font-mono text-xs font-black text-[#FB7185]">
                           PIN: {pickupPin}
@@ -135,12 +125,30 @@ async function AdminOverviewContent() {
                             order.order_type === "dine_in" ? "primary" : "muted"
                           }
                         >
-                          {modalityLabel}
+                          {order.order_type === "dine_in"
+                            ? "🍽️ Retiro en Barra (Para Servir)"
+                            : "🛍️ Retiro en Barra (Para Llevar)"}
                         </Badge>
-                        <Badge variant="muted">
-                          {PAYMENT_METHOD_LABELS[paymentMethod] ??
-                            "💵 Efectivo"}
-                        </Badge>
+
+                        {/* Payment Method Badge */}
+                        {isCard ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[10px] font-black text-violet-300">
+                            <CreditCard className="h-3 w-3" />
+                            <span>
+                              PAGADO CON TARJETA ({order.card_brand || "Visa"} •••• {order.card_last4 || "4242"})
+                            </span>
+                          </span>
+                        ) : isTransfer ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/15 px-2.5 py-0.5 text-[10px] font-black text-blue-300">
+                            <Landmark className="h-3 w-3" />
+                            <span>TRANSFERENCIA BANCARIA</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-black text-amber-300">
+                            <span>COBRAR EN EFECTIVO AL ENTREGAR</span>
+                          </span>
+                        )}
+
                         <Badge
                           variant={
                             status === "completed" || status === "ready"
@@ -178,28 +186,24 @@ async function AdminOverviewContent() {
                         </p>
                       </div>
 
-                      {paymentMethod === "cash" &&
-                      arrivalMode === "on_the_way" &&
-                      !tableNum ? (
-                        <p className="inline-flex items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-200">
-                          <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />
-                          <span>Efectivo en camino</span>
-                        </p>
-                      ) : null}
-
+                      {/* Payment Proof Button for Transfer */}
                       {order.payment_proof_url ? (
                         <div className="pt-1">
                           <a
                             href={order.payment_proof_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/25"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25"
                           >
-                            <FileCheck2 className="h-3.5 w-3.5" />
-                            <span>Ver Comprobante</span>
+                            <FileCheck2 className="h-4 w-4" />
+                            <span>Ver Comprobante de Transferencia</span>
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </div>
+                      ) : isTransfer ? (
+                        <p className="text-[11px] font-semibold text-amber-300">
+                          ⚠️ Sin comprobante adjunto.
+                        </p>
                       ) : null}
                     </div>
 
@@ -223,10 +227,10 @@ async function AdminOverviewContent() {
                             />
                             <button
                               type="submit"
-                              className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3 py-2 text-xs font-black text-white hover:bg-[#BE123C]"
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3.5 py-2 text-xs font-black text-white hover:bg-[#BE123C]"
                             >
                               <ChefHat className="h-3.5 w-3.5" />
-                              <span>Preparando</span>
+                              <span>Mandar a Cocina</span>
                             </button>
                           </form>
                         ) : null}
@@ -241,10 +245,10 @@ async function AdminOverviewContent() {
                             <input type="hidden" name="status" value="ready" />
                             <button
                               type="submit"
-                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-3 py-2 text-xs font-black text-zinc-950 hover:bg-emerald-400"
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-3.5 py-2 text-xs font-black text-zinc-950 hover:bg-emerald-400"
                             >
                               <BellRing className="h-3.5 w-3.5" />
-                              <span>¡Listo!</span>
+                              <span>¡Marcar Listo para Barra!</span>
                             </button>
                           </form>
                         ) : null}
@@ -263,7 +267,7 @@ async function AdminOverviewContent() {
                             />
                             <button
                               type="submit"
-                              className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-100 px-3 py-2 text-xs font-black text-zinc-950 hover:bg-white"
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-100 px-3.5 py-2 text-xs font-black text-zinc-950 hover:bg-white"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5" />
                               <span>Entregado</span>
@@ -288,7 +292,7 @@ async function AdminOverviewContent() {
                           >
                             <option value="pending">Recibido</option>
                             <option value="preparing">Preparando</option>
-                            <option value="ready">¡Listo!</option>
+                            <option value="ready">¡Listo para retirar!</option>
                             <option value="completed">Entregado</option>
                             <option value="cancelled">Cancelado</option>
                             <option value="no_show">

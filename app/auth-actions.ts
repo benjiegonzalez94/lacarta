@@ -21,6 +21,7 @@ const RegisterAccountSchema = z.object({
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
   restaurantName: z.string().trim().optional(),
+  branchName: z.string().trim().optional(),
   restaurantAddress: z.string().trim().optional(),
 });
 
@@ -125,6 +126,7 @@ export async function registerAccountAction(
         owner_id: userId,
         slug: finalSlug,
         name: data.restaurantName.trim(),
+        branch_name: data.branchName?.trim() || "Matriz Principal",
         slogan: "Arte en Sabor",
         phone: data.phone,
         address:
@@ -132,6 +134,9 @@ export async function registerAccountAction(
         city: matchedCity.name,
         latitude: effectiveLat,
         longitude: effectiveLng,
+        cash_payments_enabled: true,
+        transfer_payments_enabled: true,
+        card_payments_enabled: false,
         primary_color: "#E11D48",
         secondary_color: "#BE123C",
         subscription_plan: "mensual",

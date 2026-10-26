@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Camera,
   CheckCircle2,
+  CreditCard,
   History,
   IdCard,
   Loader2,
@@ -18,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { updateCustomerProfileServerAction } from "@/app/auth-actions";
+import { CustomerSavedCardsManager } from "@/components/menu/CustomerSavedCardsManager";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils/currency";
 import {
@@ -436,6 +438,15 @@ export function CustomerProfileDrawer({
                 <span>Guardar mi perfil</span>
               )}
             </button>
+          </div>
+
+          {/* Saved Cards Section */}
+          <div className="space-y-2 rounded-2xl border border-zinc-800 bg-[#121215] p-4">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-300">
+              <CreditCard className="h-3.5 w-3.5 text-[#FB7185]" />
+              <span>Mis Tarjetas Guardadas</span>
+            </div>
+            <CustomerSavedCardsManager />
           </div>
 
           {/* Minimalist Trust Badge */}

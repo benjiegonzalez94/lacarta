@@ -81,6 +81,45 @@ export type Database = {
           },
         ]
       }
+      customer_cards: {
+        Row: {
+          card_brand: string
+          card_token: string
+          created_at: string
+          exp_month: number
+          exp_year: number
+          holder_name: string
+          id: string
+          is_default: boolean
+          last4: string
+          user_id: string
+        }
+        Insert: {
+          card_brand?: string
+          card_token: string
+          created_at?: string
+          exp_month: number
+          exp_year: number
+          holder_name: string
+          id?: string
+          is_default?: boolean
+          last4: string
+          user_id: string
+        }
+        Update: {
+          card_brand?: string
+          card_token?: string
+          created_at?: string
+          exp_month?: number
+          exp_year?: number
+          holder_name?: string
+          id?: string
+          is_default?: boolean
+          last4?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       modifier_groups: {
         Row: {
           created_at: string
@@ -221,6 +260,8 @@ export type Database = {
       orders: {
         Row: {
           arrival_mode: string
+          card_brand: string | null
+          card_last4: string | null
           created_at: string
           customer_avatar_url: string | null
           customer_cedula: string | null
@@ -237,6 +278,8 @@ export type Database = {
           order_type: string
           payment_method: string
           payment_proof_url: string | null
+          payment_reference: string | null
+          payment_status: string
           pickup_pin: string
           status: string
           subtotal: number
@@ -246,6 +289,8 @@ export type Database = {
         }
         Insert: {
           arrival_mode?: string
+          card_brand?: string | null
+          card_last4?: string | null
           created_at?: string
           customer_avatar_url?: string | null
           customer_cedula?: string | null
@@ -262,6 +307,8 @@ export type Database = {
           order_type: string
           payment_method?: string
           payment_proof_url?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           pickup_pin?: string
           status?: string
           subtotal?: number
@@ -271,6 +318,8 @@ export type Database = {
         }
         Update: {
           arrival_mode?: string
+          card_brand?: string | null
+          card_last4?: string | null
           created_at?: string
           customer_avatar_url?: string | null
           customer_cedula?: string | null
@@ -287,6 +336,8 @@ export type Database = {
           order_type?: string
           payment_method?: string
           payment_proof_url?: string | null
+          payment_reference?: string | null
+          payment_status?: string
           pickup_pin?: string
           status?: string
           subtotal?: number
@@ -487,6 +538,11 @@ export type Database = {
           address: string | null
           bank_details: string | null
           banner_url: string | null
+          branch_name: string
+          card_gateway: string
+          card_merchant_id: string | null
+          card_payments_enabled: boolean
+          cash_payments_enabled: boolean
           city: string
           created_at: string
           delivery_fee: number
@@ -501,16 +557,27 @@ export type Database = {
           phone: string
           primary_color: string
           secondary_color: string
+          settlement_account_number: string | null
+          settlement_account_type: string
+          settlement_bank_name: string | null
+          settlement_holder_id: string | null
+          settlement_holder_name: string | null
           slogan: string
           slug: string
           subscription_ends_at: string
           subscription_plan: string
           subscription_status: string
+          transfer_payments_enabled: boolean
         }
         Insert: {
           address?: string | null
           bank_details?: string | null
           banner_url?: string | null
+          branch_name?: string
+          card_gateway?: string
+          card_merchant_id?: string | null
+          card_payments_enabled?: boolean
+          cash_payments_enabled?: boolean
           city?: string
           created_at?: string
           delivery_fee?: number
@@ -525,16 +592,27 @@ export type Database = {
           phone: string
           primary_color?: string
           secondary_color?: string
+          settlement_account_number?: string | null
+          settlement_account_type?: string
+          settlement_bank_name?: string | null
+          settlement_holder_id?: string | null
+          settlement_holder_name?: string | null
           slogan?: string
           slug: string
           subscription_ends_at?: string
           subscription_plan?: string
           subscription_status?: string
+          transfer_payments_enabled?: boolean
         }
         Update: {
           address?: string | null
           bank_details?: string | null
           banner_url?: string | null
+          branch_name?: string
+          card_gateway?: string
+          card_merchant_id?: string | null
+          card_payments_enabled?: boolean
+          cash_payments_enabled?: boolean
           city?: string
           created_at?: string
           delivery_fee?: number
@@ -549,11 +627,17 @@ export type Database = {
           phone?: string
           primary_color?: string
           secondary_color?: string
+          settlement_account_number?: string | null
+          settlement_account_type?: string
+          settlement_bank_name?: string | null
+          settlement_holder_id?: string | null
+          settlement_holder_name?: string | null
           slogan?: string
           slug?: string
           subscription_ends_at?: string
           subscription_plan?: string
           subscription_status?: string
+          transfer_payments_enabled?: boolean
         }
         Relationships: []
       }
@@ -584,6 +668,8 @@ export type Database = {
         Args: { p_order_id: string }
         Returns: {
           arrival_mode: string
+          card_brand: string
+          card_last4: string
           created_at: string
           customer_name: string
           has_payment_proof: boolean
@@ -591,9 +677,12 @@ export type Database = {
           order_id: string
           order_type: string
           payment_method: string
+          payment_reference: string
+          payment_status: string
           pickup_pin: string
           status: string
           table_number: number
+          tenant_branch: string
           tenant_name: string
           tenant_phone: string
           tenant_slug: string
@@ -612,6 +701,8 @@ export type Database = {
       place_order: {
         Args: {
           p_arrival_mode?: string
+          p_card_brand?: string
+          p_card_last4?: string
           p_customer_avatar_url?: string
           p_customer_cedula?: string
           p_customer_name?: string
@@ -625,6 +716,7 @@ export type Database = {
           p_order_type: string
           p_payment_method?: string
           p_payment_proof_url?: string
+          p_payment_reference?: string
           p_slug: string
           p_table_number?: number
           p_table_token?: string
