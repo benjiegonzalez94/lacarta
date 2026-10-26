@@ -6,6 +6,7 @@ import {
   buildDirectionsUrl,
   ECUADOR_CITIES,
   resolveNearestEcuadorCity,
+  getDeviceGpsCoordinates,
 } from "@/lib/utils/location";
 
 export interface SellerLocationFieldsProps {
@@ -37,34 +38,25 @@ export function SellerLocationFields({
   const [detecting, setDetecting] = useState(false);
   const [statusNote, setStatusNote] = useState<string | null>(null);
 
-  function handleCaptureCurrentGps() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setStatusNote("Tu navegador no soporta geolocalización.");
-      return;
-    }
+  async function handleCaptureCurrentGps() {
     setDetecting(true);
     setStatusNote(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = Number(pos.coords.latitude.toFixed(6));
-        const lng = Number(pos.coords.longitude.toFixed(6));
-        const nearest = resolveNearestEcuadorCity(lat, lng);
-        setLatitude(String(lat));
-        setLongitude(String(lng));
-        setCity(nearest.name);
-        setDetecting(false);
-        setStatusNote(
-          `Ubicación del local capturada en ${nearest.name} (${lat}, ${lng}). Recuerda guardar los cambios.`
-        );
-      },
-      () => {
-        setDetecting(false);
-        setStatusNote(
-          "No se pudo obtener el GPS automáticamente. Puedes seleccionar la ciudad y escribir la dirección."
-        );
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
+    try {
+      const coords = await getDeviceGpsCoordinates();
+      const nearest = resolveNearestEcuadorCity(coords.latitude, coords.longitude);
+      setLatitude(String(coords.latitude));
+      setLongitude(String(coords.longitude));
+      setCity(nearest.name);
+      setStatusNote(
+        `Ubicación del local capturada en ${nearest.name} (${coords.latitude}, ${coords.longitude}). Recuerda guardar los cambios.`
+      );
+    } catch {
+      setStatusNote(
+        "No se pudo obtener el GPS automáticamente. Puedes seleccionar la ciudad y escribir la dirección."
+      );
+    } finally {
+      setDetecting(false);
+    }
   }
 
   const parsedLat = latitude.trim() ? Number(latitude) : null;

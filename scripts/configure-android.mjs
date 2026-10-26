@@ -167,26 +167,44 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.webkit.GeolocationPermissions;
+import android.webkit.PermissionRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebChromeClient;
 
 public class MainActivity extends BridgeActivity {
-    private static final int REQ_LOCATION_WEBVIEW = 1002;
-    private GeolocationPermissions.Callback pendingGeoCallback;
-    private String pendingGeoOrigin;
+    private static final int REQ_APP_PERMISSIONS = 1001;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        configureWebViewLocation();
+        requestNativeAppPermissions();
+        configureWebViewHardware();
     }
 
-    private void configureWebViewLocation() {
+    private void requestNativeAppPermissions() {
+        boolean needsLocation =
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED;
+        boolean needsCamera =
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED;
+
+        if (needsLocation || needsCamera) {
+            ActivityCompat.requestPermissions(
+                this,
+                new String[] {
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.CAMERA
+                },
+                REQ_APP_PERMISSIONS
+            );
+        }
+    }
+
+    private void configureWebViewHardware() {
         if (this.bridge == null || this.bridge.getWebView() == null) {
             return;
         }
@@ -194,47 +212,23 @@ public class MainActivity extends BridgeActivity {
         WebSettings settings = webView.getSettings();
         settings.setGeolocationEnabled(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        settings.setDomStorageEnabled(true);
 
         webView.setWebChromeClient(new BridgeWebChromeClient(this.bridge) {
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                boolean hasLocation =
-                    ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+                // Grant geolocation for origin so Chromium executes GPS request
+                callback.invoke(origin, true, false);
+            }
 
-                if (hasLocation) {
-                    callback.invoke(origin, true, false);
-                } else {
-                    pendingGeoOrigin = origin;
-                    pendingGeoCallback = callback;
-                    ActivityCompat.requestPermissions(
-                        MainActivity.this,
-                        new String[] {
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        },
-                        REQ_LOCATION_WEBVIEW
-                    );
-                }
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                // Grant camera / media hardware access
+                runOnUiThread(() -> {
+                    request.grant(request.getResources());
+                });
             }
         });
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQ_LOCATION_WEBVIEW && pendingGeoCallback != null) {
-            boolean granted = false;
-            for (int res : grantResults) {
-                if (res == PackageManager.PERMISSION_GRANTED) {
-                    granted = true;
-                    break;
-                }
-            }
-            pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
-            pendingGeoCallback = null;
-            pendingGeoOrigin = null;
-        }
     }
 }
 `;

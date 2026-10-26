@@ -25,6 +25,7 @@ import { formatCurrency } from "@/lib/utils/currency";
 import {
   ECUADOR_CITIES,
   resolveNearestEcuadorCity,
+  getDeviceGpsCoordinates,
 } from "@/lib/utils/location";
 import type { CustomerProfile } from "@/types/domain";
 
@@ -191,24 +192,19 @@ export function CustomerProfileDrawer({
     }
   }
 
-  function handleDetectCityGps() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+  async function handleDetectCityGps() {
     setDetectingGps(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = Number(pos.coords.latitude.toFixed(6));
-        const lng = Number(pos.coords.longitude.toFixed(6));
-        const nearest = resolveNearestEcuadorCity(lat, lng);
-        setLatitude(lat);
-        setLongitude(lng);
-        setCity(nearest.name);
-        setDetectingGps(false);
-      },
-      () => {
-        setDetectingGps(false);
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
+    try {
+      const coords = await getDeviceGpsCoordinates();
+      const nearest = resolveNearestEcuadorCity(coords.latitude, coords.longitude);
+      setLatitude(coords.latitude);
+      setLongitude(coords.longitude);
+      setCity(nearest.name);
+    } catch (err) {
+      console.warn("Could not determine GPS location:", err);
+    } finally {
+      setDetectingGps(false);
+    }
   }
 
   async function handleSaveProfile() {

@@ -63,7 +63,6 @@ function buildCartItemSignature(params: {
 
 export function PublicMenuClient({
   menu,
-  resolvedTable,
 }: PublicMenuClientProps) {
   const storageKey = getStorageKey(menu.tenant.slug);
   const isClient = useSyncExternalStore(

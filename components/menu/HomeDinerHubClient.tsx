@@ -26,6 +26,7 @@ import {
   calculateDistanceKm,
   ECUADOR_CITIES,
   resolveNearestEcuadorCity,
+  getDeviceGpsCoordinates,
 } from "@/lib/utils/location";
 
 export interface DirectoryTenantItem {
@@ -97,41 +98,36 @@ export function HomeDinerHubClient({
       : null;
   });
 
-  function handleDetectUserLocation() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+  async function handleDetectUserLocation() {
     setDetectingGps(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = Number(pos.coords.latitude.toFixed(6));
-        const lng = Number(pos.coords.longitude.toFixed(6));
-        const nearest = resolveNearestEcuadorCity(lat, lng);
-        setUserLat(lat);
-        setUserLng(lng);
-        setSelectedCity(nearest.name);
-        setDetectingGps(false);
+    try {
+      const coords = await getDeviceGpsCoordinates();
+      const nearest = resolveNearestEcuadorCity(coords.latitude, coords.longitude);
+      setUserLat(coords.latitude);
+      setUserLng(coords.longitude);
+      setSelectedCity(nearest.name);
 
-        const current = readStoredCustomerProfile();
-        saveCustomerProfileToStorage({
-          ...current,
-          city: nearest.name,
-          latitude: lat,
-          longitude: lng,
-        });
-        void updateCustomerProfileServerAction({
-          fullName: current.name || customerName,
-          cedula: current.cedula,
-          phone: current.phone,
-          avatarUrl: current.avatarUrl || customerAvatar,
-          city: nearest.name,
-          latitude: lat,
-          longitude: lng,
-        });
-      },
-      () => {
-        setDetectingGps(false);
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
+      const current = readStoredCustomerProfile();
+      saveCustomerProfileToStorage({
+        ...current,
+        city: nearest.name,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      });
+      void updateCustomerProfileServerAction({
+        fullName: current.name || customerName,
+        cedula: current.cedula,
+        phone: current.phone,
+        avatarUrl: current.avatarUrl || customerAvatar,
+        city: nearest.name,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      });
+    } catch (err) {
+      console.warn("Could not determine GPS location:", err);
+    } finally {
+      setDetectingGps(false);
+    }
   }
 
   const enrichedAndFilteredTenants = useMemo(() => {

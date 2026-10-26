@@ -122,3 +122,52 @@ export function buildDirectionsUrl(target: DirectionsTarget): string {
     destinationQuery
   )}`;
 }
+
+export interface DeviceGpsResult {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}
+
+/**
+ * Robust device GPS detector that handles mobile browser & webview quirks:
+ * 1. Checks if navigator.geolocation exists.
+ * 2. Attempts high-accuracy reading with cached fallback (maximumAge: 120s).
+ * 3. If timeout or position unavailable (common indoors on Android), falls back to network/wifi low-accuracy location.
+ */
+export async function getDeviceGpsCoordinates(): Promise<DeviceGpsResult> {
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
+    throw new Error("Geolocalización no soportada en este dispositivo.");
+  }
+
+  const tryGetPosition = (options: PositionOptions): Promise<GeolocationPosition> => {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
+    });
+  };
+
+  try {
+    const pos = await tryGetPosition({
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 120000,
+    });
+    return {
+      latitude: Number(pos.coords.latitude.toFixed(6)),
+      longitude: Number(pos.coords.longitude.toFixed(6)),
+      accuracy: pos.coords.accuracy,
+    };
+  } catch {
+    // Fallback: low accuracy (cell tower / Wi-Fi) with 15s timeout and 5 min cached age
+    const fallbackPos = await tryGetPosition({
+      enableHighAccuracy: false,
+      timeout: 15000,
+      maximumAge: 300000,
+    });
+    return {
+      latitude: Number(fallbackPos.coords.latitude.toFixed(6)),
+      longitude: Number(fallbackPos.coords.longitude.toFixed(6)),
+      accuracy: fallbackPos.coords.accuracy,
+    };
+  }
+}

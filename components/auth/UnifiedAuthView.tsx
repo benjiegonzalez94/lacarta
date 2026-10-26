@@ -24,6 +24,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   ECUADOR_CITIES,
   resolveNearestEcuadorCity,
+  getDeviceGpsCoordinates,
 } from "@/lib/utils/location";
 
 export interface UnifiedAuthViewProps {
@@ -57,31 +58,20 @@ export function UnifiedAuthView({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  function handleDetectLocation() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setErrorMsg("Tu dispositivo no soporta geolocalización.");
-      return;
-    }
+  async function handleDetectLocation() {
     setDetectingGps(true);
     setErrorMsg(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = Number(pos.coords.latitude.toFixed(6));
-        const lng = Number(pos.coords.longitude.toFixed(6));
-        const nearest = resolveNearestEcuadorCity(lat, lng);
-        setLatitude(lat);
-        setLongitude(lng);
-        setCity(nearest.name);
-        setDetectingGps(false);
-      },
-      () => {
-        setDetectingGps(false);
-        setErrorMsg(
-          "No se pudo leer el GPS. Puedes elegir tu ciudad manualmente."
-        );
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
+    try {
+      const coords = await getDeviceGpsCoordinates();
+      const nearest = resolveNearestEcuadorCity(coords.latitude, coords.longitude);
+      setLatitude(coords.latitude);
+      setLongitude(coords.longitude);
+      setCity(nearest.name);
+    } catch {
+      setErrorMsg("No se pudo leer el GPS automáticamente. Elige tu ciudad en la lista.");
+    } finally {
+      setDetectingGps(false);
+    }
   }
 
   async function finalizeSignInRedirect() {
