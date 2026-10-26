@@ -14,7 +14,6 @@ import {
   OrderStatusUpdateSchema,
   ProductFormSchema,
   ProductUpdateSchema,
-  TableCreateSchema,
   TenantSettingsSchema,
   UuidSchema,
 } from "@/lib/validators/admin";
@@ -57,9 +56,10 @@ async function requireOwnedTenant(): Promise<{
 async function uploadProductImageIfPresent(
   supabase: Awaited<ReturnType<typeof createClient>>,
   tenantId: string,
-  formData: FormData
+  formData: FormData,
+  fieldName = "imageFile"
 ): Promise<string | null> {
-  const fileEntry = formData.get("imageFile");
+  const fileEntry = formData.get(fieldName);
   if (!(fileEntry instanceof File) || fileEntry.size <= 0) {
     return null;
   }
@@ -485,16 +485,28 @@ export async function saveBusinessHoursAction(formData: FormData) {
 
 export async function updateTenantSettingsAction(formData: FormData) {
   const { supabase, tenant } = await requireOwnedTenant();
+
+  let resolvedLogoUrl = String(formData.get("logoUrl") ?? "").trim();
+  const uploadedLogo = await uploadProductImageIfPresent(
+    supabase,
+    tenant.id,
+    formData,
+    "logoFile"
+  );
+  if (uploadedLogo) {
+    resolvedLogoUrl = uploadedLogo;
+  }
+
   const parsed = TenantSettingsSchema.safeParse({
     name: formData.get("name"),
     slogan: formData.get("slogan") || "Arte en Sabor",
     phone: formData.get("phone"),
-    deliveryFee: formData.get("deliveryFee"),
+    deliveryFee: formData.get("deliveryFee") ?? 0,
     address: formData.get("address") || undefined,
     bankDetails: formData.get("bankDetails") || undefined,
     primaryColor: formData.get("primaryColor") || "#E11D48",
-    secondaryColor: formData.get("secondaryColor") || "#D34E27",
-    logoUrl: formData.get("logoUrl") || undefined,
+    secondaryColor: formData.get("secondaryColor") || "#BE123C",
+    logoUrl: resolvedLogoUrl || undefined,
     bannerUrl: formData.get("bannerUrl") || undefined,
   });
 
@@ -522,43 +534,6 @@ export async function updateTenantSettingsAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath(`/${tenant.slug}`);
   revalidatePath("/");
-}
-
-export async function createTableAction(formData: FormData) {
-  const { supabase, tenant } = await requireOwnedTenant();
-  const parsed = TableCreateSchema.safeParse({
-    tableNumber: formData.get("tableNumber"),
-  });
-
-  if (!parsed.success) {
-    return;
-  }
-
-  const qrToken = `${tenant.slug}-mesa-${parsed.data.tableNumber}-${crypto
-    .randomUUID()
-    .slice(0, 6)}`;
-
-  await supabase.from("tables").insert({
-    tenant_id: tenant.id,
-    table_number: parsed.data.tableNumber,
-    qr_token: qrToken,
-  });
-
-  revalidatePath("/admin/configuracion");
-}
-
-export async function deleteTableAction(formData: FormData) {
-  const { supabase, tenant } = await requireOwnedTenant();
-  const parsedId = UuidSchema.safeParse(formData.get("tableId"));
-  if (!parsedId.success) return;
-
-  await supabase
-    .from("tables")
-    .delete()
-    .eq("id", parsedId.data)
-    .eq("tenant_id", tenant.id);
-
-  revalidatePath("/admin/configuracion");
 }
 
 export async function updateOrderStatusAction(formData: FormData) {

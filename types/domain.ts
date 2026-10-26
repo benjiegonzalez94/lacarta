@@ -132,10 +132,13 @@ export interface PlaceOrderInput {
   items: OrderItemPayload[];
   customerName?: string | null;
   customerPhone?: string | null;
+  customerCedula?: string | null;
+  customerAvatarUrl?: string | null;
   deliveryAddress?: string | null;
   deliveryReference?: string | null;
   notes?: string | null;
   tableToken?: string | null;
+  tableNumber?: number | null;
   paymentMethod?: PaymentMethod;
   deliveryLat?: number | null;
   deliveryLng?: number | null;
@@ -160,7 +163,9 @@ export interface PlaceOrderResult {
 
 export interface CustomerProfile {
   name: string;
+  cedula: string;
   phone: string;
+  avatarUrl: string;
   savedOrders: Array<{
     orderId: string;
     tenantSlug: string;

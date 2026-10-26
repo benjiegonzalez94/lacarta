@@ -44,17 +44,7 @@ export async function placePublicOrder(
     throw new Error("TENANT_NOT_FOUND");
   }
 
-  let tableNumber: number | null = null;
-  if (input.tableToken) {
-    const { data: tableRows } = await supabase.rpc("resolve_table", {
-      p_slug: input.slug,
-      p_qr_token: input.tableToken,
-    });
-    if (!tableRows || tableRows.length === 0) {
-      throw new Error("TABLE_NOT_FOUND");
-    }
-    tableNumber = tableRows[0].table_number;
-  }
+  const tableNumber: number | null = input.tableNumber ?? null;
 
   const productIds = Array.from(new Set(input.items.map((i) => i.product_id)));
   const allOptionIds = Array.from(
@@ -112,15 +102,14 @@ export async function placePublicOrder(
     p_items: input.items,
     p_customer_name: input.customerName ?? undefined,
     p_customer_phone: input.customerPhone ?? undefined,
-    p_delivery_address: input.deliveryAddress ?? undefined,
-    p_delivery_reference: input.deliveryReference ?? undefined,
     p_notes: input.notes ?? undefined,
     p_table_token: input.tableToken ?? undefined,
     p_payment_method: input.paymentMethod ?? "cash",
-    p_delivery_lat: input.deliveryLat ?? undefined,
-    p_delivery_lng: input.deliveryLng ?? undefined,
     p_payment_proof_url: input.paymentProofUrl ?? undefined,
     p_arrival_mode: input.arrivalMode ?? "on_the_way",
+    p_table_number: tableNumber ?? undefined,
+    p_customer_cedula: input.customerCedula ?? undefined,
+    p_customer_avatar_url: input.customerAvatarUrl ?? undefined,
   });
 
   if (rpcError || !orderId) {
@@ -136,10 +125,6 @@ export async function placePublicOrder(
     tableNumber,
     customerName: input.customerName,
     customerPhone: input.customerPhone,
-    deliveryAddress: input.deliveryAddress,
-    deliveryReference: input.deliveryReference,
-    deliveryLat: input.deliveryLat ?? null,
-    deliveryLng: input.deliveryLng ?? null,
     paymentMethod: input.paymentMethod ?? "cash",
     orderNotes: input.notes,
     items: whatsappLines,

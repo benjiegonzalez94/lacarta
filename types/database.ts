@@ -222,6 +222,8 @@ export type Database = {
         Row: {
           arrival_mode: string
           created_at: string
+          customer_avatar_url: string | null
+          customer_cedula: string | null
           customer_name: string | null
           customer_phone: string | null
           delivery_address: string | null
@@ -230,6 +232,7 @@ export type Database = {
           delivery_lng: number | null
           delivery_reference: string | null
           id: string
+          manual_table_number: number | null
           notes: string | null
           order_type: string
           payment_method: string
@@ -244,6 +247,8 @@ export type Database = {
         Insert: {
           arrival_mode?: string
           created_at?: string
+          customer_avatar_url?: string | null
+          customer_cedula?: string | null
           customer_name?: string | null
           customer_phone?: string | null
           delivery_address?: string | null
@@ -252,6 +257,7 @@ export type Database = {
           delivery_lng?: number | null
           delivery_reference?: string | null
           id?: string
+          manual_table_number?: number | null
           notes?: string | null
           order_type: string
           payment_method?: string
@@ -266,6 +272,8 @@ export type Database = {
         Update: {
           arrival_mode?: string
           created_at?: string
+          customer_avatar_url?: string | null
+          customer_cedula?: string | null
           customer_name?: string | null
           customer_phone?: string | null
           delivery_address?: string | null
@@ -274,6 +282,7 @@ export type Database = {
           delivery_lng?: number | null
           delivery_reference?: string | null
           id?: string
+          manual_table_number?: number | null
           notes?: string | null
           order_type?: string
           payment_method?: string
@@ -491,6 +500,10 @@ export type Database = {
         Args: { p_order_id: string; p_slug: string; p_table_token: string }
         Returns: number
       }
+      assign_order_table_number: {
+        Args: { p_order_id: string; p_table_number: number }
+        Returns: number
+      }
       get_customer_trust_profile: {
         Args: { p_phone: string }
         Returns: {
@@ -533,6 +546,8 @@ export type Database = {
       place_order: {
         Args: {
           p_arrival_mode?: string
+          p_customer_avatar_url?: string
+          p_customer_cedula?: string
           p_customer_name?: string
           p_customer_phone?: string
           p_delivery_address?: string
@@ -545,6 +560,7 @@ export type Database = {
           p_payment_method?: string
           p_payment_proof_url?: string
           p_slug: string
+          p_table_number?: number
           p_table_token?: string
         }
         Returns: string

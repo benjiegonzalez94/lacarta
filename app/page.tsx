@@ -4,17 +4,11 @@ import {
   HomeDinerHubClient,
   type DirectoryTenantItem,
 } from "@/components/menu/HomeDinerHubClient";
-import type { QuickTableItem } from "@/components/menu/TableQrScannerModal";
 import { createPublicServerClient } from "@/lib/supabase/server";
 import { getScheduleStatus } from "@/lib/utils/schedule";
 
-interface HomePageProps {
-  searchParams: Promise<{ scan?: string }>;
-}
-
-async function HomeHubContent({ searchParams }: HomePageProps) {
+async function HomeHubContent() {
   await connection();
-  const params = await searchParams;
   const supabase = createPublicServerClient();
 
   const [{ data: tenantsData }, { data: hoursData }] = await Promise.all([
@@ -37,7 +31,6 @@ async function HomeHubContent({ searchParams }: HomePageProps) {
       slogan: t.slogan || "Arte en Sabor",
       phone: t.phone,
       address: t.address,
-      deliveryFee: Number(t.delivery_fee),
       primaryColor: t.primary_color || "#E11D48",
       logoUrl: t.logo_url,
       isOpen: schedule.isOpen,
@@ -46,24 +39,10 @@ async function HomeHubContent({ searchParams }: HomePageProps) {
     };
   });
 
-  // Provide quick table links for pilot restaurant Cowiings (Mesas 1..5)
-  const quickTables: QuickTableItem[] = [1, 2, 3, 4, 5].map((num) => ({
-    tenantSlug: "cowiings",
-    tenantName: "Cowiings",
-    tableNumber: num,
-    qrToken: `cowiings-mesa-${num}`,
-  }));
-
-  return (
-    <HomeDinerHubClient
-      tenants={tenants}
-      quickTables={quickTables}
-      initialScanOpen={params.scan === "1"}
-    />
-  );
+  return <HomeDinerHubClient tenants={tenants} />;
 }
 
-export default function HomePage(props: HomePageProps) {
+export default function HomePage() {
   return (
     <Suspense
       fallback={
@@ -72,7 +51,7 @@ export default function HomePage(props: HomePageProps) {
         </div>
       }
     >
-      <HomeHubContent {...props} />
+      <HomeHubContent />
     </Suspense>
   );
 }

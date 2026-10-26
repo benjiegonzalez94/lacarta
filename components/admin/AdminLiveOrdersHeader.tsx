@@ -59,7 +59,7 @@ export function AdminLiveOrdersHeader({
   }
 
   function handleShareWhatsApp() {
-    const text = `🍔 ¡Hola! Haz tu pedido a domicilio o retiro en el menú digital de *${tenantName}*: ${menuLink}`;
+    const text = `🍔 ¡Hola! Pide anticipado o desde tu mesa en *${tenantName}*: ${menuLink}`;
     window.open(
       `https://wa.me/?text=${encodeURIComponent(text)}`,
       "_blank",
@@ -68,18 +68,14 @@ export function AdminLiveOrdersHeader({
   }
 
   return (
-    <div className="rounded-2xl border border-[#E11D48]/35 bg-gradient-to-r from-[#271018] via-[#18181B] to-[#18181B] p-4 sm:p-5">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div className="rounded-2xl border border-[#E11D48]/35 bg-gradient-to-r from-[#271018] via-[#18181B] to-[#18181B] p-4">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#E11D48]">
             <Radio className="h-3.5 w-3.5 animate-pulse text-emerald-400" />
-            <span>Tu Link Personalizado para Clientes y Redes Sociales</span>
+            <span>Link Directo de tu Menú</span>
           </div>
-          <p className="mt-1 text-xs text-zinc-300">
-            Compártelo en WhatsApp, Instagram o Facebook para recibir pedidos a
-            domicilio (con ubicación GPS) o retiro en local:
-          </p>
-          <p className="mt-1.5 inline-block rounded-lg border border-zinc-700 bg-[#121215] px-3 py-1 font-mono text-xs font-bold text-[#E11D48]">
+          <p className="mt-1 inline-block rounded-lg border border-zinc-700 bg-[#121215] px-3 py-1 font-mono text-xs font-bold text-[#E11D48]">
             {menuLink}
           </p>
         </div>
@@ -89,7 +85,7 @@ export function AdminLiveOrdersHeader({
             id="dashboard-copy-menu-link-btn"
             type="button"
             onClick={handleCopyLink}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3.5 py-2.5 text-xs font-black text-white hover:bg-[#BE123C]"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3.5 py-2 text-xs font-black text-white hover:bg-[#BE123C]"
           >
             {copied ? (
               <>
@@ -108,10 +104,10 @@ export function AdminLiveOrdersHeader({
             id="dashboard-share-menu-wa-btn"
             type="button"
             onClick={handleShareWhatsApp}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3.5 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3.5 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25"
           >
             <Share2 className="h-4 w-4" />
-            <span>Compartir por WhatsApp</span>
+            <span>Compartir</span>
           </button>
 
           <button
@@ -122,7 +118,7 @@ export function AdminLiveOrdersHeader({
               router.refresh();
               setTimeout(() => setIsRefreshing(false), 600);
             }}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-2.5 text-xs font-semibold text-zinc-200 hover:border-[#E11D48]"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-2 text-xs font-semibold text-zinc-200 hover:border-[#E11D48]"
           >
             <RefreshCw
               className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}

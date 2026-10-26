@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { BellRing, ChefHat, User } from "lucide-react";
+import { BellRing, User } from "lucide-react";
 import { CartCheckoutDrawer } from "@/components/menu/CartCheckoutDrawer";
 import { CategoryTabs } from "@/components/menu/CategoryTabs";
 import {
@@ -236,9 +236,8 @@ export function PublicMenuClient({
 
   return (
     <>
-      {/* Customer Account & Live Order Status Bar */}
       <div className="border-b border-zinc-800/80 bg-[#141418]">
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-2.5">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-2">
           <button
             id="open-customer-profile-bar-btn"
             type="button"
@@ -246,7 +245,7 @@ export function PublicMenuClient({
             className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs font-bold text-zinc-100 hover:border-[#E11D48]"
           >
             <User className="h-3.5 w-3.5 text-[#E11D48]" />
-            <span>Mi Cuenta / Mis Pedidos</span>
+            <span>Mi Perfil</span>
           </button>
 
           {recentTenantOrderId ? (
@@ -254,20 +253,14 @@ export function PublicMenuClient({
               id="open-live-order-tracker-bar-btn"
               type="button"
               onClick={() => setTrackingOrderId(recentTenantOrderId)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3.5 py-1.5 text-xs font-black text-white shadow-sm shadow-[#E11D48]/30 hover:bg-[#BE123C]"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3 py-1.5 text-xs font-black text-white hover:bg-[#BE123C]"
             >
-              <BellRing className="h-3.5 w-3.5 animate-pulse" />
+              <BellRing className="h-3.5 w-3.5" />
               <span>
-                Ver Estado de mi Pedido #
-                {recentTenantOrderId.slice(0, 6).toUpperCase()}
+                Mi Pedido #{recentTenantOrderId.slice(0, 6).toUpperCase()}
               </span>
             </button>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400">
-              <ChefHat className="h-3.5 w-3.5 text-[#FB7185]" />
-              <span>Pide en camino o desde tu mesa sin esperas</span>
-            </span>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -303,19 +296,12 @@ export function PublicMenuClient({
                 className="scroll-mt-28"
               >
                 <div className="mb-3.5 flex items-end justify-between border-b border-zinc-800/80 pb-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-black uppercase tracking-tight text-zinc-50 sm:text-xl">
-                        {category.name}
-                      </h2>
-                      {category.badge ? (
-                        <Badge variant="primary">{category.badge}</Badge>
-                      ) : null}
-                    </div>
-                    {category.description ? (
-                      <p className="mt-0.5 text-xs text-zinc-400">
-                        {category.description}
-                      </p>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-black uppercase tracking-tight text-zinc-50">
+                      {category.name}
+                    </h2>
+                    {category.badge ? (
+                      <Badge variant="primary">{category.badge}</Badge>
                     ) : null}
                   </div>
                 </div>
@@ -354,7 +340,6 @@ export function PublicMenuClient({
         <CartCheckoutDrawer
           tenant={menu.tenant}
           cart={activeCart}
-          tables={menu.tables}
           resolvedTable={resolvedTable}
           onClose={() => setIsCartOpen(false)}
           onUpdateQty={handleUpdateCartQty}
@@ -376,7 +361,6 @@ export function PublicMenuClient({
       {trackingOrderId ? (
         <OrderLiveTrackerModal
           orderId={trackingOrderId}
-          availableTables={menu.tables}
           onClose={() => setTrackingOrderId(null)}
         />
       ) : null}

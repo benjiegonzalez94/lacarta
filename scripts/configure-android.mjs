@@ -90,39 +90,24 @@ function renderLaCartaIconPng(size, options = { circular: false, foregroundOnly:
       const bgB = Math.round(94 * (1 - t) + 57 * t);
 
       // Foreground symbol in normalized 512x512 space
-      // Scale slightly smaller if rendering adaptive foreground (safe zone is center 66%)
       const sx = options.foregroundOnly ? (px - 256) * 1.45 + 256 : px;
       const sy = options.foregroundOnly ? (py - 256) * 1.45 + 256 : py;
 
       // 1. Top cloche handle circle
-      const dHandle = Math.hypot(sx - 256, sy - 134) - 22;
+      const dHandle = Math.hypot(sx - 256, sy - 144) - 22;
 
-      // 2. Cloche dome arch (semicircle above y=272, center 256,272, radius 126)
-      const dCircleDome = Math.hypot(sx - 256, sy - 272) - 126;
-      const dDome = Math.max(dCircleDome, sy - 272);
+      // 2. Cloche dome arch (semicircle above y=282, center 256,282, radius 126)
+      const dCircleDome = Math.hypot(sx - 256, sy - 282) - 126;
+      const dDome = Math.max(dCircleDome, sy - 282);
 
       // 3. Base platter line
-      const dPlatter = sdRoundedBox(sx, sy, 256, 308, 146, 15, 15);
+      const dPlatter = sdRoundedBox(sx, sy, 256, 320, 146, 15, 15);
 
-      // 4. Menu lines on bottom left
-      const dLine1 = sdRoundedBox(sx, sy, 206, 360, 62, 11, 11);
-      const dLine2 = sdRoundedBox(sx, sy, 186, 398, 42, 11, 11);
+      // 4. Minimalist menu card lines centered below platter
+      const dLine1 = sdRoundedBox(sx, sy, 256, 368, 96, 11, 11);
+      const dLine2 = sdRoundedBox(sx, sy, 256, 404, 58, 11, 11);
 
-      // 5. QR finder square on bottom right (outer ring + center dot)
-      const dQrOuter = sdRoundedBox(sx, sy, 340, 380, 34, 34, 12);
-      const dQrInner = sdRoundedBox(sx, sy, 340, 380, 20, 20, 5);
-      const dQrRing = Math.max(dQrOuter, -dQrInner);
-      const dQrDot = sdRoundedBox(sx, sy, 340, 380, 9, 9, 3);
-
-      const dSymbol = Math.min(
-        dHandle,
-        dDome,
-        dPlatter,
-        dLine1,
-        dLine2,
-        dQrRing,
-        dQrDot
-      );
+      const dSymbol = Math.min(dHandle, dDome, dPlatter, dLine1, dLine2);
 
       const fgAlpha = Math.max(0, Math.min(1, 0.5 - dSymbol / inv));
 
@@ -153,174 +138,7 @@ if (!fs.existsSync(androidRoot)) {
   process.exit(0);
 }
 
-// 1. Patch AndroidManifest.xml with Camera & GPS permissions
-const manifestPath = path.join(androidRoot, "AndroidManifest.xml");
-let manifestXml = fs.readFileSync(manifestPath, "utf8");
-const permissionsBlock = `
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <uses-feature android:name="android.hardware.location.gps" android:required="false" />`;
-
-if (!manifestXml.includes("android.permission.CAMERA")) {
-  manifestXml = manifestXml.replace(
-    '<uses-permission android:name="android.permission.INTERNET" />',
-    '<uses-permission android:name="android.permission.INTERNET" />' +
-      permissionsBlock
-  );
-  fs.writeFileSync(manifestPath, manifestXml, "utf8");
-  console.log("Patched AndroidManifest.xml with CAMERA and LOCATION permissions.");
-}
-
-// 2. Patch MainActivity.java to request runtime permissions and grant WebView GPS + Camera
-const mainActivityPath = path.join(
-  androidRoot,
-  "java/com/lacarta/app/MainActivity.java"
-);
-const mainActivityJava = `package com.lacarta.app;
-
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.os.Bundle;
-import android.webkit.GeolocationPermissions;
-import android.webkit.PermissionRequest;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import com.getcapacitor.BridgeActivity;
-import com.getcapacitor.BridgeWebChromeClient;
-
-public class MainActivity extends BridgeActivity {
-    private static final int REQ_PERMISSIONS_STARTUP = 1001;
-    private static final int REQ_LOCATION_WEBVIEW = 1002;
-    private static final int REQ_CAMERA_WEBVIEW = 1003;
-
-    private GeolocationPermissions.Callback pendingGeoCallback;
-    private String pendingGeoOrigin;
-    private PermissionRequest pendingCameraRequest;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        configureWebViewPermissions();
-        requestInitialPermissionsIfNeeded();
-    }
-
-    private void requestInitialPermissionsIfNeeded() {
-        boolean hasCamera = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
-        boolean hasFineLoc = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
-        if (!hasCamera || !hasFineLoc) {
-            ActivityCompat.requestPermissions(
-                this,
-                new String[] {
-                    Manifest.permission.CAMERA,
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                },
-                REQ_PERMISSIONS_STARTUP
-            );
-        }
-    }
-
-    private void configureWebViewPermissions() {
-        if (this.bridge == null || this.bridge.getWebView() == null) {
-            return;
-        }
-        WebView webView = this.bridge.getWebView();
-        WebSettings settings = webView.getSettings();
-        settings.setGeolocationEnabled(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setJavaScriptCanOpenWindowsAutomatically(true);
-
-        webView.setWebChromeClient(new BridgeWebChromeClient(this.bridge) {
-            @Override
-            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                boolean hasLocation =
-                    ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
-                if (hasLocation) {
-                    callback.invoke(origin, true, false);
-                } else {
-                    pendingGeoOrigin = origin;
-                    pendingGeoCallback = callback;
-                    ActivityCompat.requestPermissions(
-                        MainActivity.this,
-                        new String[] {
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        },
-                        REQ_LOCATION_WEBVIEW
-                    );
-                }
-            }
-
-            @Override
-            public void onPermissionRequest(final PermissionRequest request) {
-                boolean wantsCamera = false;
-                for (String res : request.getResources()) {
-                    if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(res)) {
-                        wantsCamera = true;
-                        break;
-                    }
-                }
-
-                if (!wantsCamera) {
-                    request.grant(request.getResources());
-                    return;
-                }
-
-                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                    request.grant(request.getResources());
-                } else {
-                    pendingCameraRequest = request;
-                    ActivityCompat.requestPermissions(
-                        MainActivity.this,
-                        new String[] { Manifest.permission.CAMERA },
-                        REQ_CAMERA_WEBVIEW
-                    );
-                }
-            }
-        });
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == REQ_LOCATION_WEBVIEW && pendingGeoCallback != null) {
-            boolean granted = false;
-            for (int res : grantResults) {
-                if (res == PackageManager.PERMISSION_GRANTED) {
-                    granted = true;
-                    break;
-                }
-            }
-            pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
-            pendingGeoCallback = null;
-            pendingGeoOrigin = null;
-        } else if (requestCode == REQ_CAMERA_WEBVIEW && pendingCameraRequest != null) {
-            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-            if (granted) {
-                pendingCameraRequest.grant(pendingCameraRequest.getResources());
-            } else {
-                pendingCameraRequest.deny();
-            }
-            pendingCameraRequest = null;
-        }
-    }
-}
-`;
-
-fs.mkdirSync(path.dirname(mainActivityPath), { recursive: true });
-fs.writeFileSync(mainActivityPath, mainActivityJava, "utf8");
-console.log("Wrote MainActivity.java with native WebView GPS & Camera bridges.");
-
-// 3. Generate minimalist crimson-red launcher icons across all Android mipmap folders
+// Generate minimalist crimson-red launcher icons across all Android mipmap folders
 const mipmapSpecs = [
   { folder: "mipmap-mdpi", size: 48, fgSize: 108 },
   { folder: "mipmap-hdpi", size: 72, fgSize: 162 },

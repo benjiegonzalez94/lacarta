@@ -10,8 +10,8 @@ export const SlugSchema = z
 export const QrTokenSchema = z
   .string()
   .trim()
-  .min(3, "Código QR inválido.")
-  .max(120, "Código QR inválido.");
+  .min(3, "Código inválido.")
+  .max(120, "Código inválido.");
 
 export const OrderItemInputSchema = z.object({
   product_id: z.string().uuid("ID de producto inválido."),
@@ -53,16 +53,16 @@ export const PlaceOrderSchema = z
       .max(30, "El teléfono es demasiado largo.")
       .nullable()
       .optional(),
-    deliveryAddress: z
+    customerCedula: z
       .string()
       .trim()
-      .max(300, "La dirección es demasiado larga.")
+      .max(20, "La cédula es demasiado larga.")
       .nullable()
       .optional(),
-    deliveryReference: z
+    customerAvatarUrl: z
       .string()
       .trim()
-      .max(300, "La referencia es demasiado larga.")
+      .max(2000, "Imagen de perfil demasiado larga.")
       .nullable()
       .optional(),
     notes: z
@@ -77,22 +77,17 @@ export const PlaceOrderSchema = z
       .max(120)
       .nullable()
       .optional(),
+    tableNumber: z
+      .number()
+      .int("El número de mesa debe ser entero.")
+      .min(1, "El número de mesa debe ser mayor a 0.")
+      .max(500, "Número de mesa fuera de rango.")
+      .nullable()
+      .optional(),
     paymentMethod: z
       .enum(["cash", "transfer", "card_soon"])
       .optional()
       .default("cash"),
-    deliveryLat: z
-      .number()
-      .min(-90)
-      .max(90)
-      .nullable()
-      .optional(),
-    deliveryLng: z
-      .number()
-      .min(-180)
-      .max(180)
-      .nullable()
-      .optional(),
     paymentProofUrl: z
       .string()
       .trim()
@@ -118,7 +113,7 @@ export const PlaceOrderSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["customerPhone"],
-        message: "Ingresa tu número de WhatsApp / celular (mínimo 7 dígitos).",
+        message: "Ingresa tu número de celular (mínimo 7 dígitos).",
       });
     }
 
@@ -137,12 +132,13 @@ export const PlaceOrderSchema = z
     if (
       data.arrivalMode === "at_table" &&
       data.orderType === "dine_in" &&
-      (!data.tableToken || data.tableToken.trim().length === 0)
+      !data.tableNumber &&
+      !data.tableToken
     ) {
       ctx.addIssue({
         code: "custom",
-        path: ["tableToken"],
-        message: "Selecciona el número de mesa donde te encuentras.",
+        path: ["tableNumber"],
+        message: "Digita el número de mesa donde te encuentras.",
       });
     }
   });

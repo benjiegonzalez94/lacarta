@@ -5,8 +5,8 @@ import {
   ChefHat,
   ExternalLink,
   FileCheck2,
-  MessageCircle,
   ShieldAlert,
+  User,
 } from "lucide-react";
 import { updateOrderStatusAction } from "@/app/(dashboard)/admin/actions";
 import { AdminLiveOrdersHeader } from "@/components/admin/AdminLiveOrdersHeader";
@@ -17,10 +17,7 @@ import {
 } from "@/lib/services/admin.service";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency } from "@/lib/utils/currency";
-import {
-  buildSellerConfirmationWhatsAppUrl,
-  PAYMENT_METHOD_LABELS,
-} from "@/lib/whatsapp";
+import { PAYMENT_METHOD_LABELS } from "@/lib/whatsapp";
 import type { OrderStatus, PaymentMethod } from "@/types/domain";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -65,9 +62,9 @@ async function AdminOverviewContent() {
         tenantName={tenant.name}
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-3 gap-3">
         <div className="rounded-2xl border border-zinc-800 bg-[#18181B] p-4">
-          <p className="text-xs text-zinc-400">Pedidos en curso</p>
+          <p className="text-xs text-zinc-400">Pedidos activos</p>
           <p className="mt-1 text-2xl font-black text-emerald-400">
             {activeOrdersCount}
           </p>
@@ -81,70 +78,40 @@ async function AdminOverviewContent() {
         <div className="rounded-2xl border border-zinc-800 bg-[#18181B] p-4">
           <p className="text-xs text-zinc-400">Productos activos</p>
           <p className="mt-1 text-2xl font-black text-[#E11D48]">
-            {availableProductsCount} / {data.products.length}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-zinc-800 bg-[#18181B] p-4">
-          <p className="text-xs text-zinc-400">Mesas del local</p>
-          <p className="mt-1 text-2xl font-black text-zinc-50">
-            {data.tables.length}
+            {availableProductsCount}
           </p>
         </div>
       </div>
 
       <section>
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-black uppercase tracking-tight text-zinc-50">
-              Control de Despacho y Cocina en Tiempo Real
-            </h1>
-            <p className="text-xs text-zinc-400">
-              Avanza el estado con 1 toque (Recibido → Preparando → ¡Listo para
-              retirar!) para avisar al cliente en su celular sin necesitar
-              meseros
-            </p>
-          </div>
+        <div className="mb-3">
+          <h1 className="text-base font-black uppercase tracking-tight text-zinc-50">
+            Pedidos Recibidos
+          </h1>
         </div>
 
         {data.orders.length === 0 ? (
           <div className="rounded-2xl border border-zinc-800 bg-[#18181B] p-8 text-center text-sm text-zinc-400">
-            Aún no se han registrado pedidos. Comparte tu link{" "}
-            <span className="font-mono text-zinc-200">/{tenant.slug}</span> o
-            coloca los códigos QR en tus mesas.
+            Aún no hay pedidos registrados.
           </div>
         ) : (
-          <div className="space-y-3.5">
+          <div className="space-y-3">
             {data.orders.map((order) => {
               const status = order.status as OrderStatus;
               const paymentMethod = (order.payment_method ||
                 "cash") as PaymentMethod;
-              const tableNum = order.table_id
-                ? tableNumberById.get(order.table_id)
-                : null;
+              const tableNum =
+                order.manual_table_number ??
+                (order.table_id ? tableNumberById.get(order.table_id) : null);
               const arrivalMode = order.arrival_mode || "on_the_way";
               const pickupPin = order.pickup_pin || "----";
 
-              let modalityLabel = "🛍️ Para Llevar (Retiro en Barra)";
+              let modalityLabel = "🛍️ Para Llevar";
               if (order.order_type === "dine_in") {
                 modalityLabel = tableNum
-                  ? `🍽️ Para Servir • Mesa #${tableNum}`
-                  : "🚗 Para Servir (Cliente en camino)";
+                  ? `🍽️ Mesa #${tableNum}`
+                  : "🚗 Para Servir (En camino)";
               }
-
-              const replyWhatsAppUrl = order.customer_phone
-                ? buildSellerConfirmationWhatsAppUrl({
-                    customerPhone: order.customer_phone,
-                    customerName: order.customer_name,
-                    restaurantName: tenant.name,
-                    orderId: order.id,
-                    orderType: order.order_type,
-                    paymentMethod,
-                    subtotal: Number(order.subtotal),
-                    deliveryFee: 0,
-                    total: Number(order.total),
-                    bankDetails: tenant.bank_details,
-                  })
-                : null;
 
               return (
                 <div
@@ -162,9 +129,6 @@ async function AdminOverviewContent() {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-lg bg-zinc-900 px-2.5 py-1 font-mono text-xs font-black text-[#FB7185]">
                           PIN: {pickupPin}
-                        </span>
-                        <span className="font-mono text-xs font-bold text-zinc-400">
-                          #{order.id.slice(0, 6).toUpperCase()}
                         </span>
                         <Badge
                           variant={
@@ -190,31 +154,41 @@ async function AdminOverviewContent() {
                         </Badge>
                       </div>
 
-                      <p className="text-xs font-semibold text-zinc-200">
-                        {order.customer_name
-                          ? `Cliente: ${order.customer_name}`
-                          : tableNum
-                            ? `Comensal en Mesa #${tableNum}`
-                            : "Cliente en local"}{" "}
-                        {order.customer_phone
-                          ? `• Cel: ${order.customer_phone}`
-                          : ""}
-                      </p>
+                      <div className="flex items-center gap-2.5 pt-0.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-[#202024]">
+                          {order.customer_avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={order.customer_avatar_url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-4 w-4 text-zinc-400" />
+                          )}
+                        </div>
+                        <p className="text-xs font-semibold text-zinc-200">
+                          {order.customer_name || "Cliente"}
+                          {order.customer_cedula
+                            ? ` • CI: ${order.customer_cedula}`
+                            : ""}
+                          {order.customer_phone
+                            ? ` • Cel: ${order.customer_phone}`
+                            : ""}
+                        </p>
+                      </div>
 
                       {paymentMethod === "cash" &&
                       arrivalMode === "on_the_way" &&
                       !tableNum ? (
                         <p className="inline-flex items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-200">
                           <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />
-                          <span>
-                            Efectivo en camino: Si tienes alta demanda, confirma
-                            llegada en barra o por WhatsApp.
-                          </span>
+                          <span>Efectivo en camino</span>
                         </p>
                       ) : null}
 
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        {order.payment_proof_url ? (
+                      {order.payment_proof_url ? (
+                        <div className="pt-1">
                           <a
                             href={order.payment_proof_url}
                             target="_blank"
@@ -222,35 +196,18 @@ async function AdminOverviewContent() {
                             className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/25"
                           >
                             <FileCheck2 className="h-3.5 w-3.5" />
-                            <span>Ver Comprobante de Transferencia</span>
+                            <span>Ver Comprobante</span>
                             <ExternalLink className="h-3 w-3" />
                           </a>
-                        ) : null}
-
-                        {replyWhatsAppUrl ? (
-                          <a
-                            href={replyWhatsAppUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-[#202024] px-2.5 py-1 text-[11px] font-bold text-zinc-200 hover:border-emerald-500/50 hover:text-emerald-300"
-                          >
-                            <MessageCircle className="h-3 w-3 text-emerald-400" />
-                            <span>Contactar por WhatsApp</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ) : null}
-                      </div>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="flex flex-col items-end gap-2">
-                      <div className="text-right">
-                        <span className="text-xs text-zinc-400">Total</span>
-                        <p className="text-base font-black text-[#FB7185]">
-                          {formatCurrency(Number(order.total))}
-                        </p>
-                      </div>
+                      <p className="text-base font-black text-[#FB7185]">
+                        {formatCurrency(Number(order.total))}
+                      </p>
 
-                      {/* 1-Tap Kitchen Dispatch Buttons */}
                       <div className="flex flex-wrap items-center justify-end gap-1.5">
                         {status === "pending" || status === "confirmed" ? (
                           <form action={updateOrderStatusAction}>
@@ -266,10 +223,10 @@ async function AdminOverviewContent() {
                             />
                             <button
                               type="submit"
-                              className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3 py-2 text-xs font-black text-white shadow-sm hover:bg-[#BE123C]"
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3 py-2 text-xs font-black text-white hover:bg-[#BE123C]"
                             >
                               <ChefHat className="h-3.5 w-3.5" />
-                              <span>Pasar a Preparando</span>
+                              <span>Preparando</span>
                             </button>
                           </form>
                         ) : null}
@@ -284,10 +241,10 @@ async function AdminOverviewContent() {
                             <input type="hidden" name="status" value="ready" />
                             <button
                               type="submit"
-                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-3 py-2 text-xs font-black text-zinc-950 shadow-sm hover:bg-emerald-400"
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-3 py-2 text-xs font-black text-zinc-950 hover:bg-emerald-400"
                             >
                               <BellRing className="h-3.5 w-3.5" />
-                              <span>¡Listo para Retirar / Mesa!</span>
+                              <span>¡Listo!</span>
                             </button>
                           </form>
                         ) : null}
@@ -309,14 +266,14 @@ async function AdminOverviewContent() {
                               className="inline-flex items-center gap-1.5 rounded-xl bg-zinc-100 px-3 py-2 text-xs font-black text-zinc-950 hover:bg-white"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5" />
-                              <span>Marcar Entregado</span>
+                              <span>Entregado</span>
                             </button>
                           </form>
                         ) : null}
 
                         <form
                           action={updateOrderStatusAction}
-                          className="flex items-center gap-1.5"
+                          className="flex items-center gap-1"
                         >
                           <input
                             type="hidden"
@@ -327,13 +284,11 @@ async function AdminOverviewContent() {
                             id={`order-status-select-${order.id}`}
                             name="status"
                             defaultValue={order.status}
-                            className="rounded-xl border border-zinc-700 bg-[#202024] px-2.5 py-1.5 text-xs text-zinc-100"
+                            className="rounded-xl border border-zinc-700 bg-[#202024] px-2 py-1.5 text-xs text-zinc-100"
                           >
                             <option value="pending">Recibido</option>
-                            <option value="preparing">En preparación</option>
-                            <option value="ready">
-                              ¡Listo para retirar / mesa!
-                            </option>
+                            <option value="preparing">Preparando</option>
+                            <option value="ready">¡Listo!</option>
                             <option value="completed">Entregado</option>
                             <option value="cancelled">Cancelado</option>
                             <option value="no_show">
@@ -345,7 +300,7 @@ async function AdminOverviewContent() {
                             type="submit"
                             className="rounded-xl border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-bold text-zinc-200 hover:border-[#E11D48]"
                           >
-                            Cambiar
+                            OK
                           </button>
                         </form>
                       </div>
@@ -375,7 +330,7 @@ async function AdminOverviewContent() {
                   </ul>
                   {order.notes ? (
                     <p className="mt-2 rounded-lg bg-[#141418] px-2.5 py-1.5 text-[11px] text-zinc-400">
-                      📝 Nota del cliente: {order.notes}
+                      📝 {order.notes}
                     </p>
                   ) : null}
                 </div>
@@ -392,7 +347,7 @@ export default function AdminDashboardPage() {
   return (
     <Suspense
       fallback={
-        <div className="text-sm text-zinc-400">Cargando resumen...</div>
+        <div className="text-sm text-zinc-400">Cargando pedidos...</div>
       }
     >
       <AdminOverviewContent />

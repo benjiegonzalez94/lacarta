@@ -11,7 +11,7 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
-  Settings,
+  User,
 } from "lucide-react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
@@ -23,10 +23,10 @@ export interface AdminNavProps {
 }
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Resumen y Pedidos", icon: LayoutDashboard },
-  { href: "/admin/productos", label: "Productos y Carta", icon: Package },
+  { href: "/admin", label: "Pedidos", icon: LayoutDashboard },
+  { href: "/admin/productos", label: "Menú y Extras", icon: Package },
   { href: "/admin/horarios", label: "Horarios", icon: Clock },
-  { href: "/admin/configuracion", label: "Perfil, Pagos y QR", icon: Settings },
+  { href: "/admin/configuracion", label: "Mi Perfil", icon: User },
 ];
 
 export function AdminNav({ tenant, userEmail }: AdminNavProps) {
@@ -60,7 +60,18 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <BrandLogo size="md" />
+            {tenant.logo_url ? (
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-[#E11D48]/40 bg-[#202024]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={tenant.logo_url}
+                  alt={tenant.name}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <BrandLogo size="md" />
+            )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="truncate text-base font-black uppercase tracking-tight text-zinc-50">
@@ -70,9 +81,7 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
                   /{tenant.slug}
                 </span>
               </div>
-              <p className="truncate text-xs text-zinc-400">
-                Vendedor: {userEmail}
-              </p>
+              <p className="truncate text-xs text-zinc-400">{userEmail}</p>
             </div>
           </div>
 
@@ -97,21 +106,21 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
             {copiedMenuLink ? (
               <>
                 <Check className="h-3.5 w-3.5" />
-                <span>¡Link copiado para clientes!</span>
+                <span>¡Link copiado!</span>
               </>
             ) : (
               <>
                 <Copy className="h-3.5 w-3.5" />
-                <span>Copiar Link de Mi Menú</span>
+                <span>Copiar Link del Menú</span>
               </>
             )}
           </button>
 
           <Link
             href={`/${tenant.slug}`}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-2 text-xs font-semibold text-zinc-100 hover:border-[#E11D48] hover:text-[#FB7185]"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-2 text-xs font-semibold text-zinc-100 hover:border-[#E11D48]"
           >
-            <span>Ver Carta</span>
+            <span>Ver Menú</span>
             <ExternalLink className="h-3.5 w-3.5" />
           </Link>
 

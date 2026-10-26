@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Camera,
   CheckCircle2,
   CreditCard,
   History,
+  IdCard,
+  Loader2,
   Phone,
   ShieldAlert,
   ShieldCheck,
@@ -19,19 +22,29 @@ const PROFILE_STORAGE_KEY = "lacarta_customer_profile_v1";
 
 export function readStoredCustomerProfile(): CustomerProfile {
   if (typeof window === "undefined") {
-    return { name: "", phone: "", savedOrders: [] };
+    return { name: "", cedula: "", phone: "", avatarUrl: "", savedOrders: [] };
   }
   try {
     const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (!raw) return { name: "", phone: "", savedOrders: [] };
+    if (!raw) {
+      return {
+        name: "",
+        cedula: "",
+        phone: "",
+        avatarUrl: "",
+        savedOrders: [],
+      };
+    }
     const parsed = JSON.parse(raw) as Partial<CustomerProfile>;
     return {
       name: typeof parsed.name === "string" ? parsed.name : "",
+      cedula: typeof parsed.cedula === "string" ? parsed.cedula : "",
       phone: typeof parsed.phone === "string" ? parsed.phone : "",
+      avatarUrl: typeof parsed.avatarUrl === "string" ? parsed.avatarUrl : "",
       savedOrders: Array.isArray(parsed.savedOrders) ? parsed.savedOrders : [],
     };
   } catch {
-    return { name: "", phone: "", savedOrders: [] };
+    return { name: "", cedula: "", phone: "", avatarUrl: "", savedOrders: [] };
   }
 }
 
@@ -58,10 +71,17 @@ export function CustomerProfileDrawer({
   onProfileUpdated,
 }: CustomerProfileDrawerProps) {
   const [name, setName] = useState(() => readStoredCustomerProfile().name);
+  const [cedula, setCedula] = useState(
+    () => readStoredCustomerProfile().cedula
+  );
   const [phone, setPhone] = useState(() => readStoredCustomerProfile().phone);
+  const [avatarUrl, setAvatarUrl] = useState(
+    () => readStoredCustomerProfile().avatarUrl
+  );
   const [savedOrders] = useState<CustomerProfile["savedOrders"]>(
     () => readStoredCustomerProfile().savedOrders
   );
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [trustInfo, setTrustInfo] = useState<{
     completed: number;
@@ -70,6 +90,8 @@ export function CustomerProfileDrawer({
     maxCashRemote: number;
     tier: string;
   } | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -95,11 +117,64 @@ export function CustomerProfileDrawer({
 
   if (!isOpen) return null;
 
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const filePath = `customers/${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { cacheControl: "3600", upsert: false });
+
+      if (!error) {
+        const { data: pub } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+        if (pub?.publicUrl) {
+          setAvatarUrl(pub.publicUrl);
+          setUploadingAvatar(false);
+          return;
+        }
+      }
+
+      // Fallback compact data URL
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const size = 200;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, size, size);
+            setAvatarUrl(canvas.toDataURL("image/jpeg", 0.7).slice(0, 1990));
+          }
+          setUploadingAvatar(false);
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setUploadingAvatar(false);
+    }
+  }
+
   function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     const updated: CustomerProfile = {
       name: name.trim(),
+      cedula: cedula.trim(),
       phone: phone.trim(),
+      avatarUrl: avatarUrl.trim(),
       savedOrders,
     };
     saveCustomerProfileToStorage(updated);
@@ -126,10 +201,10 @@ export function CustomerProfileDrawer({
                 id="customer-profile-title"
                 className="text-base font-black uppercase text-zinc-50"
               >
-                Mi Cuenta Comensal
+                Mi Perfil de Cliente
               </h2>
               <p className="text-[11px] text-zinc-400">
-                Tus datos, reputación y pedidos en tiempo real
+                Información básica y estado de tus pedidos
               </p>
             </div>
           </div>
@@ -148,17 +223,60 @@ export function CustomerProfileDrawer({
         <div className="flex-1 space-y-5 overflow-y-auto p-5">
           <form
             onSubmit={handleSaveProfile}
-            className="space-y-3 rounded-2xl border border-zinc-800 bg-[#141418] p-4"
+            className="space-y-3.5 rounded-2xl border border-zinc-800 bg-[#141418] p-4"
           >
-            <h3 className="text-xs font-black uppercase tracking-wider text-zinc-200">
-              Datos Personales para Pedidos Rápidos
-            </h3>
+            {/* Avatar / Profile Photo */}
+            <div className="flex items-center gap-3.5">
+              <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#E11D48] bg-[#202024]">
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarUrl}
+                    alt={name || "Foto de perfil"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-7 w-7 text-zinc-400" />
+                )}
+              </div>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+                <button
+                  id="upload-customer-avatar-btn"
+                  type="button"
+                  disabled={uploadingAvatar}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs font-bold text-zinc-100 hover:border-[#E11D48]"
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#E11D48]" />
+                  ) : (
+                    <Camera className="h-3.5 w-3.5 text-[#E11D48]" />
+                  )}
+                  <span>
+                    {uploadingAvatar
+                      ? "Subiendo..."
+                      : "Cambiar foto de perfil"}
+                  </span>
+                </button>
+                <p className="mt-1 text-[10px] text-zinc-500">
+                  Visible al realizar tus pedidos en el local
+                </p>
+              </div>
+            </div>
+
             <div>
               <label
                 htmlFor="profile-customer-name"
                 className="mb-1 block text-xs font-semibold text-zinc-400"
               >
-                Nombre y Apellido
+                Nombre y Apellido *
               </label>
               <input
                 id="profile-customer-name"
@@ -173,10 +291,33 @@ export function CustomerProfileDrawer({
 
             <div>
               <label
+                htmlFor="profile-customer-cedula"
+                className="mb-1 block text-xs font-semibold text-zinc-400"
+              >
+                Cédula de Identidad *
+              </label>
+              <div className="relative">
+                <IdCard className="pointer-events-none absolute top-2.5 left-3 h-3.5 w-3.5 text-zinc-500" />
+                <input
+                  id="profile-customer-cedula"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={13}
+                  required
+                  value={cedula}
+                  onChange={(e) => setCedula(e.target.value)}
+                  placeholder="Ej: 0912345678"
+                  className="w-full rounded-xl border border-zinc-800 bg-[#202024] py-2 pr-3 pl-8 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
                 htmlFor="profile-customer-phone"
                 className="mb-1 block text-xs font-semibold text-zinc-400"
               >
-                Celular / WhatsApp
+                Celular / WhatsApp *
               </label>
               <div className="relative">
                 <Phone className="pointer-events-none absolute top-2.5 left-3 h-3.5 w-3.5 text-zinc-500" />
@@ -200,10 +341,10 @@ export function CustomerProfileDrawer({
               {savedSuccess ? (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
-                  <span>¡Perfil guardado en tu teléfono!</span>
+                  <span>¡Perfil guardado!</span>
                 </>
               ) : (
-                <span>Guardar mi cuenta</span>
+                <span>Guardar mi Perfil</span>
               )}
             </button>
           </form>
@@ -212,68 +353,58 @@ export function CustomerProfileDrawer({
           <div className="rounded-2xl border border-zinc-800 bg-[#141418] p-4">
             <div className="flex items-center gap-2">
               {trustInfo?.cashAllowed === false ? (
-                <ShieldAlert className="h-5 w-5 text-red-400" />
+                <ShieldAlert className="h-4 w-4 text-red-400" />
               ) : (
-                <ShieldCheck className="h-5 w-5 text-emerald-400" />
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
               )}
-              <h3 className="text-xs font-black uppercase tracking-wider text-zinc-200">
-                Nivel de Confianza (Pagos en Efectivo)
+              <h3 className="text-xs font-bold text-zinc-200">
+                Estado para Pagos en Efectivo
               </h3>
             </div>
-            <p className="mt-1.5 text-[11px] leading-relaxed text-zinc-400">
+            <p className="mt-1 text-[11px] leading-relaxed text-zinc-400">
               {trustInfo ? (
                 trustInfo.cashAllowed ? (
                   <>
-                    Cuenta habilitada para pago en efectivo (
-                    <strong className="text-emerald-400">
-                      {trustInfo.completed} pedidos cumplidos
-                    </strong>
-                    ). Tope para pre-orden en efectivo mientras vas en camino:{" "}
+                    Habilitado ({trustInfo.completed} pedidos cumplidos). Tope
+                    en camino en efectivo:{" "}
                     <strong className="text-zinc-200">
                       {formatCurrency(trustInfo.maxCashRemote)}
-                    </strong>{" "}
-                    (sin límite por transferencia bancaria o estando en mesa).
+                    </strong>
+                    .
                   </>
                 ) : (
                   <span className="text-red-300">
-                    Tu cuenta registra un pedido previo en efectivo no retirado.
-                    Puedes seguir pidiendo normalmente con{" "}
-                    <strong>Transferencia Bancaria + Comprobante</strong>.
+                    Por inasistencia previa en efectivo, tu cuenta solo permite
+                    pedidos por Transferencia Bancaria.
                   </span>
                 )
               ) : (
-                "Guarda tu número de celular para consultar tu cupo de pre-orden en efectivo y acumular pedidos cumplidos."
+                "Tu cédula y celular respaldan tus reservas en efectivo en el local."
               )}
             </p>
           </div>
 
-          {/* Future Saved Card Section */}
-          <div className="rounded-2xl border border-zinc-800/80 bg-[#141418] p-4 opacity-85">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-zinc-200">
-                <CreditCard className="h-4 w-4 text-[#FB7185]" />
-                <span>Tarjeta Guardada para Pago en 1 Toque</span>
-              </div>
-              <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-400">
-                Próximamente
-              </span>
+          {/* Future Saved Card */}
+          <div className="flex items-center justify-between rounded-2xl border border-zinc-800/80 bg-[#141418] px-4 py-3 opacity-80">
+            <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
+              <CreditCard className="h-4 w-4 text-[#FB7185]" />
+              <span>Tarjeta guardada en perfil</span>
             </div>
-            <p className="mt-1 text-[11px] text-zinc-400">
-              Pronto podrás vincular tu tarjeta de débito o crédito nacional en
-              tu perfil para pagar sin efectivo ni capturas.
-            </p>
+            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-400">
+              Próximamente
+            </span>
           </div>
 
           {/* Saved Orders History */}
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-zinc-300">
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-300">
               <History className="h-4 w-4 text-[#E11D48]" />
-              <span>Mis Pedidos Recientes (Toca para ver estado)</span>
+              <span>Mis Pedidos</span>
             </div>
 
             {savedOrders.length === 0 ? (
               <div className="rounded-2xl border border-zinc-800 bg-[#141418] p-4 text-center text-xs text-zinc-500">
-                Aún no tienes pedidos en este dispositivo.
+                Aún no tienes pedidos registrados.
               </div>
             ) : (
               <div className="space-y-2">
@@ -285,7 +416,7 @@ export function CustomerProfileDrawer({
                       onClose();
                       onOpenOrderTracker(ord.orderId);
                     }}
-                    className="flex w-full items-center justify-between rounded-2xl border border-zinc-800 bg-[#141418] p-3.5 text-left transition-colors hover:border-[#E11D48]"
+                    className="flex w-full items-center justify-between rounded-2xl border border-zinc-800 bg-[#141418] p-3 text-left transition-colors hover:border-[#E11D48]"
                   >
                     <div>
                       <p className="text-xs font-black uppercase text-zinc-100">
@@ -293,8 +424,7 @@ export function CustomerProfileDrawer({
                         {ord.orderId.slice(0, 6).toUpperCase()}
                       </p>
                       <p className="text-[11px] text-zinc-400">
-                        Ver estado en tiempo real (Recibido / Preparando /
-                        Listo)
+                        Ver estado en tiempo real
                       </p>
                     </div>
                     <span className="text-xs font-black text-[#FB7185]">
