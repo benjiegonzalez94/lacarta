@@ -93,24 +93,23 @@ export const PlaceOrderSchema = z
       .max(180)
       .nullable()
       .optional(),
+    paymentProofUrl: z
+      .string()
+      .trim()
+      .max(2000, "URL de comprobante demasiado larga.")
+      .nullable()
+      .optional(),
+    arrivalMode: z
+      .enum(["on_the_way", "at_table"])
+      .optional()
+      .default("on_the_way"),
   })
   .superRefine((data, ctx) => {
-    if (data.orderType === "dine_in") {
-      if (!data.tableToken || data.tableToken.trim().length === 0) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["tableToken"],
-          message: "Se requiere el código de mesa para pedidos en local.",
-        });
-      }
-      return;
-    }
-
     if (!data.customerName || data.customerName.trim().length < 2) {
       ctx.addIssue({
         code: "custom",
         path: ["customerName"],
-        message: "Ingresa tu nombre para el pedido.",
+        message: "Ingresa tu nombre para identificar tu pedido.",
       });
     }
 
@@ -119,18 +118,31 @@ export const PlaceOrderSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["customerPhone"],
-        message: "Ingresa un número de teléfono válido (mínimo 7 dígitos).",
+        message: "Ingresa tu número de WhatsApp / celular (mínimo 7 dígitos).",
       });
     }
 
     if (
-      data.orderType === "delivery" &&
-      (!data.deliveryAddress || data.deliveryAddress.trim().length < 4)
+      data.paymentMethod === "transfer" &&
+      (!data.paymentProofUrl || data.paymentProofUrl.trim().length === 0)
     ) {
       ctx.addIssue({
         code: "custom",
-        path: ["deliveryAddress"],
-        message: "Ingresa la dirección de entrega para tu pedido a domicilio.",
+        path: ["paymentProofUrl"],
+        message:
+          "Adjunta la captura o foto del comprobante de transferencia bancaria.",
+      });
+    }
+
+    if (
+      data.arrivalMode === "at_table" &&
+      data.orderType === "dine_in" &&
+      (!data.tableToken || data.tableToken.trim().length === 0)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["tableToken"],
+        message: "Selecciona el número de mesa donde te encuentras.",
       });
     }
   });

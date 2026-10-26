@@ -9,23 +9,19 @@ import {
 import type { Database } from "@/types/database";
 import type {
   OrderCalculationResult,
-  OrderType,
   PlaceOrderResult,
 } from "@/types/domain";
 
 export function calculateOrderTotals(
-  items: ReadonlyArray<{ unitPrice: number; quantity: number }>,
-  orderType: OrderType,
-  tenantDeliveryFee: number
+  items: ReadonlyArray<{ unitPrice: number; quantity: number }>
 ): OrderCalculationResult {
   const rawSubtotal = items.reduce(
     (sum, item) => sum + Number(item.unitPrice) * item.quantity,
     0
   );
   const subtotal = roundMoney(rawSubtotal);
-  const deliveryFee =
-    orderType === "delivery" ? roundMoney(Math.max(0, tenantDeliveryFee)) : 0;
-  const total = roundMoney(subtotal + deliveryFee);
+  const deliveryFee = 0;
+  const total = roundMoney(subtotal);
 
   return {
     subtotal,
@@ -49,7 +45,7 @@ export async function placePublicOrder(
   }
 
   let tableNumber: number | null = null;
-  if (input.orderType === "dine_in" && input.tableToken) {
+  if (input.tableToken) {
     const { data: tableRows } = await supabase.rpc("resolve_table", {
       p_slug: input.slug,
       p_qr_token: input.tableToken,
@@ -123,17 +119,15 @@ export async function placePublicOrder(
     p_payment_method: input.paymentMethod ?? "cash",
     p_delivery_lat: input.deliveryLat ?? undefined,
     p_delivery_lng: input.deliveryLng ?? undefined,
+    p_payment_proof_url: input.paymentProofUrl ?? undefined,
+    p_arrival_mode: input.arrivalMode ?? "on_the_way",
   });
 
   if (rpcError || !orderId) {
     throw new Error(rpcError?.message || "ORDER_CREATION_FAILED");
   }
 
-  const totals = calculateOrderTotals(
-    whatsappLines,
-    input.orderType,
-    Number(tenant.delivery_fee)
-  );
+  const totals = calculateOrderTotals(whatsappLines);
 
   const whatsappMessage = buildWhatsAppOrderMessage({
     restaurantName: tenant.name,

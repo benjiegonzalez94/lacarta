@@ -155,6 +155,7 @@ export async function getPublicMenuBySlug(
     { data: groupsData },
     { data: optionsData },
     { data: productGroupsData },
+    { data: publicTablesData },
   ] = await Promise.all([
     supabase
       .from("categories")
@@ -188,6 +189,7 @@ export async function getPublicMenuBySlug(
       .select("*")
       .eq("tenant_id", tenant.id)
       .order("sort_order", { ascending: true }),
+    supabase.rpc("list_public_tables", { p_slug: slug }),
   ]);
 
   const rawCategories: CategoryRow[] = categoriesData ?? [];
@@ -243,6 +245,12 @@ export async function getPublicMenuBySlug(
     })
     .filter((cat) => cat.products.length > 0);
 
+  const tables: ResolvedTable[] = (publicTablesData ?? []).map((tb) => ({
+    tableId: tb.table_id,
+    tableNumber: tb.table_number,
+    qrToken: tb.qr_token,
+  }));
+
   return {
     tenant: {
       ...tenant,
@@ -251,17 +259,18 @@ export async function getPublicMenuBySlug(
     branding: {
       slogan: tenant.slogan || "Arte en Sabor",
       primaryColor: tenant.primary_color || "#E11D48",
-      secondaryColor: tenant.secondary_color || "#D34E27",
+      secondaryColor: tenant.secondary_color || "#BE123C",
       bannerUrl: tenant.banner_url ?? null,
       taglines: [
         tenant.slogan || "Arte en Sabor",
-        "Calidad y sabor preparados al momento",
+        "Pide antes de llegar o desde tu mesa sin hacer filas",
       ],
-      serviceNotice: "Servicio a Domicilio disponible en horario de atención",
+      serviceNotice: "Atención en Mesa y Retiro en el Local sin esperas",
     },
     categories,
     sauces: DEFAULT_SAUCES,
     schedule: getScheduleStatus(rawHours),
+    tables,
   };
 }
 

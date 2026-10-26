@@ -121,8 +121,10 @@ export const OrderStatusUpdateSchema = z.object({
     "pending",
     "confirmed",
     "preparing",
+    "ready",
     "completed",
     "cancelled",
+    "no_show",
   ]),
 });
 

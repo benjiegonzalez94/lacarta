@@ -13,14 +13,18 @@ export type ProductModifierGroupRow = Tables<"product_modifier_groups">;
 
 export type OrderType = "delivery" | "pickup" | "dine_in";
 
+export type ArrivalMode = "on_the_way" | "at_table";
+
 export type PaymentMethod = "cash" | "transfer" | "card_soon";
 
 export type OrderStatus =
   | "pending"
   | "confirmed"
   | "preparing"
+  | "ready"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "no_show";
 
 export interface SauceOption {
   id: string;
@@ -79,18 +83,19 @@ export interface TenantBranding {
   serviceNotice: string;
 }
 
+export interface ResolvedTable {
+  tableId: string;
+  tableNumber: number;
+  qrToken: string;
+}
+
 export interface PublicMenuBundle {
   tenant: TenantRow;
   branding: TenantBranding;
   categories: MenuCategoryWithProducts[];
   sauces: SauceOption[];
   schedule: ScheduleStatus;
-}
-
-export interface ResolvedTable {
-  tableId: string;
-  tableNumber: number;
-  qrToken: string;
+  tables: ResolvedTable[];
 }
 
 export interface SelectedModifierChoice {
@@ -134,6 +139,8 @@ export interface PlaceOrderInput {
   paymentMethod?: PaymentMethod;
   deliveryLat?: number | null;
   deliveryLng?: number | null;
+  paymentProofUrl?: string | null;
+  arrivalMode?: ArrivalMode;
 }
 
 export interface OrderCalculationResult {
@@ -149,4 +156,16 @@ export interface PlaceOrderResult {
   total: number;
   whatsappUrl: string;
   whatsappMessage: string;
+}
+
+export interface CustomerProfile {
+  name: string;
+  phone: string;
+  savedOrders: Array<{
+    orderId: string;
+    tenantSlug: string;
+    tenantName: string;
+    total: number;
+    createdAt: string;
+  }>;
 }

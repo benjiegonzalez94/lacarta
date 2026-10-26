@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { BellRing, ChefHat, User } from "lucide-react";
 import { CartCheckoutDrawer } from "@/components/menu/CartCheckoutDrawer";
 import { CategoryTabs } from "@/components/menu/CategoryTabs";
+import {
+  CustomerProfileDrawer,
+  readStoredCustomerProfile,
+} from "@/components/menu/CustomerProfileDrawer";
 import { FloatingCartBar } from "@/components/menu/FloatingCartBar";
+import { OrderLiveTrackerModal } from "@/components/menu/OrderLiveTrackerModal";
 import { ProductCard } from "@/components/menu/ProductCard";
 import { ProductCustomizeModal } from "@/components/menu/ProductCustomizeModal";
 import { Badge } from "@/components/ui/Badge";
@@ -76,6 +82,17 @@ export function PublicMenuClient({
   const [customizingProduct, setCustomizingProduct] =
     useState<EnrichedProduct | null>(null);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
+  const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
+  const [trackingOrderId, setTrackingOrderId] = useState<string | null>(null);
+  const [recentTenantOrderId, setRecentTenantOrderId] = useState<string | null>(
+    () => {
+      const profile = readStoredCustomerProfile();
+      const match = profile.savedOrders.find(
+        (o) => o.tenantSlug === menu.tenant.slug
+      );
+      return match?.orderId ?? null;
+    }
+  );
 
   useEffect(() => {
     try {
@@ -219,6 +236,41 @@ export function PublicMenuClient({
 
   return (
     <>
+      {/* Customer Account & Live Order Status Bar */}
+      <div className="border-b border-zinc-800/80 bg-[#141418]">
+        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-2.5">
+          <button
+            id="open-customer-profile-bar-btn"
+            type="button"
+            onClick={() => setIsProfileOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs font-bold text-zinc-100 hover:border-[#E11D48]"
+          >
+            <User className="h-3.5 w-3.5 text-[#E11D48]" />
+            <span>Mi Cuenta / Mis Pedidos</span>
+          </button>
+
+          {recentTenantOrderId ? (
+            <button
+              id="open-live-order-tracker-bar-btn"
+              type="button"
+              onClick={() => setTrackingOrderId(recentTenantOrderId)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3.5 py-1.5 text-xs font-black text-white shadow-sm shadow-[#E11D48]/30 hover:bg-[#BE123C]"
+            >
+              <BellRing className="h-3.5 w-3.5 animate-pulse" />
+              <span>
+                Ver Estado de mi Pedido #
+                {recentTenantOrderId.slice(0, 6).toUpperCase()}
+              </span>
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400">
+              <ChefHat className="h-3.5 w-3.5 text-[#FB7185]" />
+              <span>Pide en camino o desde tu mesa sin esperas</span>
+            </span>
+          )}
+        </div>
+      </div>
+
       <CategoryTabs
         categories={menu.categories}
         activeCategoryId={activeCategoryId}
@@ -302,11 +354,30 @@ export function PublicMenuClient({
         <CartCheckoutDrawer
           tenant={menu.tenant}
           cart={activeCart}
+          tables={menu.tables}
           resolvedTable={resolvedTable}
           onClose={() => setIsCartOpen(false)}
           onUpdateQty={handleUpdateCartQty}
           onRemoveItem={handleRemoveCartItem}
           onClearCart={handleClearCart}
+          onOrderCreated={(newOrderId) => {
+            setRecentTenantOrderId(newOrderId);
+            setTrackingOrderId(newOrderId);
+          }}
+        />
+      ) : null}
+
+      <CustomerProfileDrawer
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        onOpenOrderTracker={(ordId) => setTrackingOrderId(ordId)}
+      />
+
+      {trackingOrderId ? (
+        <OrderLiveTrackerModal
+          orderId={trackingOrderId}
+          availableTables={menu.tables}
+          onClose={() => setTrackingOrderId(null)}
         />
       ) : null}
     </>

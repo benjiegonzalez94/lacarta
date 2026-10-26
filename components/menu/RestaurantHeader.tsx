@@ -6,11 +6,10 @@ import {
   Phone,
   QrCode,
   Sparkles,
-  Truck,
+  Utensils,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { BrandLogo } from "@/components/ui/BrandLogo";
-import { formatCurrency } from "@/lib/utils/currency";
 import type {
   ResolvedTable,
   ScheduleStatus,
@@ -58,7 +57,7 @@ export function RestaurantHeader({
             className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-[#18181B]/90 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition-colors hover:border-[#E11D48] hover:text-[#FB7185]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>LaCarta • Locales y Escáner QR</span>
+            <span>LaCarta • Buscar Locales</span>
           </Link>
 
           {!resolvedTable ? (
@@ -68,7 +67,7 @@ export function RestaurantHeader({
               className="inline-flex items-center gap-1.5 rounded-xl border border-[#E11D48]/40 bg-[#E11D48]/10 px-3 py-1.5 text-xs font-bold text-[#FB7185] hover:bg-[#E11D48]/20"
             >
               <QrCode className="h-3.5 w-3.5" />
-              <span>¿Estás en una mesa? Escanear QR</span>
+              <span>¿Ya estás en una mesa? Escanear QR</span>
             </Link>
           ) : null}
         </div>
@@ -143,18 +142,14 @@ export function RestaurantHeader({
           </div>
 
           <div className="flex items-center gap-2.5 rounded-xl border border-zinc-800/90 bg-[#18181B]/90 px-3 py-2 text-xs text-zinc-300">
-            <Truck
+            <Utensils
               className="h-4 w-4 shrink-0"
               style={{ color: branding.primaryColor }}
             />
             <div>
-              <span className="font-semibold text-zinc-100">
-                Domicilio y Retiro:
-              </span>{" "}
+              <span className="font-semibold text-zinc-100">Modalidad:</span>{" "}
               <span>
-                {tenant.delivery_fee > 0
-                  ? `Envío base ${formatCurrency(tenant.delivery_fee)} (según ubicación)`
-                  : "Cotización de envío por ubicación en WhatsApp"}
+                Para Servir en Mesa o Para Llevar (Adelanta tu orden en camino)
               </span>
             </div>
           </div>
@@ -166,11 +161,11 @@ export function RestaurantHeader({
               className="h-3.5 w-3.5"
               style={{ color: branding.primaryColor }}
             />
-            Efectivo o Transferencia • Ubicación GPS automática
+            Sigue el estado en vivo: Recibido → Preparando → ¡Listo!
           </span>
           <span className="inline-flex items-center gap-1 text-zinc-300">
             <Phone className="h-3.5 w-3.5 text-emerald-400" />
-            WhatsApp: {tenant.phone}
+            Contacto: {tenant.phone}
           </span>
         </div>
 

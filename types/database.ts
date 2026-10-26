@@ -220,6 +220,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          arrival_mode: string
           created_at: string
           customer_name: string | null
           customer_phone: string | null
@@ -232,6 +233,8 @@ export type Database = {
           notes: string | null
           order_type: string
           payment_method: string
+          payment_proof_url: string | null
+          pickup_pin: string
           status: string
           subtotal: number
           table_id: string | null
@@ -239,6 +242,7 @@ export type Database = {
           total: number
         }
         Insert: {
+          arrival_mode?: string
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -251,6 +255,8 @@ export type Database = {
           notes?: string | null
           order_type: string
           payment_method?: string
+          payment_proof_url?: string | null
+          pickup_pin?: string
           status?: string
           subtotal?: number
           table_id?: string | null
@@ -258,6 +264,7 @@ export type Database = {
           total?: number
         }
         Update: {
+          arrival_mode?: string
           created_at?: string
           customer_name?: string | null
           customer_phone?: string | null
@@ -270,6 +277,8 @@ export type Database = {
           notes?: string | null
           order_type?: string
           payment_method?: string
+          payment_proof_url?: string | null
+          pickup_pin?: string
           status?: string
           subtotal?: number
           table_id?: string | null
@@ -478,9 +487,52 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_order_table: {
+        Args: { p_order_id: string; p_slug: string; p_table_token: string }
+        Returns: number
+      }
+      get_customer_trust_profile: {
+        Args: { p_phone: string }
+        Returns: {
+          cash_allowed: boolean
+          completed_orders: number
+          max_cash_remote: number
+          no_show_orders: number
+          trust_tier: string
+        }[]
+      }
+      get_order_live_status: {
+        Args: { p_order_id: string }
+        Returns: {
+          arrival_mode: string
+          created_at: string
+          customer_name: string
+          has_payment_proof: boolean
+          items: Json
+          order_id: string
+          order_type: string
+          payment_method: string
+          pickup_pin: string
+          status: string
+          table_number: number
+          tenant_name: string
+          tenant_phone: string
+          tenant_slug: string
+          total: number
+        }[]
+      }
       is_tenant_owner: { Args: { p_tenant_id: string }; Returns: boolean }
+      list_public_tables: {
+        Args: { p_slug: string }
+        Returns: {
+          qr_token: string
+          table_id: string
+          table_number: number
+        }[]
+      }
       place_order: {
         Args: {
+          p_arrival_mode?: string
           p_customer_name?: string
           p_customer_phone?: string
           p_delivery_address?: string
@@ -491,6 +543,7 @@ export type Database = {
           p_notes?: string
           p_order_type: string
           p_payment_method?: string
+          p_payment_proof_url?: string
           p_slug: string
           p_table_token?: string
         }
