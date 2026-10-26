@@ -1,4 +1,4 @@
-name: Build Android APK (Capacitor - Manual)
+name: Build Android APK (Capacitor)
 
 on:
   workflow_dispatch:
@@ -7,6 +7,14 @@ on:
         description: 'URL de producción (ej. https://lacartaec.vercel.app)'
         required: false
         default: 'https://lacartaec.vercel.app'
+  push:
+    branches: [main]
+    paths:
+      - 'capacitor.config.json'
+      - '.github/workflows/android-apk.yml'
+
+permissions:
+  contents: write
 
 jobs:
   build-apk:
@@ -29,8 +37,10 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Verify pre-installed Android SDK on ubuntu-latest
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || true
 
       - name: Install project dependencies & Capacitor
         run: |
@@ -73,7 +83,7 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Rename APK for easy download
         run: |
@@ -85,3 +95,13 @@ jobs:
           name: lacarta-android-apk
           path: ./lacarta-android.apk
           retention-days: 30
+
+      - name: Publish Direct Download APK in GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: "LaCarta Android APK (Última versión)"
+          body: "Descarga directa del archivo `lacarta-android.apk` conectado a `https://lacartaec.vercel.app`."
+          files: ./lacarta-android.apk
+          prerelease: false
+          make_latest: true
