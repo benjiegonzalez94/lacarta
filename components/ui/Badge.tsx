@@ -15,7 +15,7 @@ export interface BadgeProps {
 
 const VARIANT_CLASSES: Record<NonNullable<BadgeProps["variant"]>, string> = {
   primary:
-    "bg-[#E5A93C]/15 text-[#E5A93C] border border-[#E5A93C]/35",
+    "bg-[#E11D48]/15 text-[#E11D48] border border-[#E11D48]/35",
   secondary:
     "bg-[#D34E27]/20 text-[#FF8A65] border border-[#D34E27]/40",
   success:

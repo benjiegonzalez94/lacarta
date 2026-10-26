@@ -75,7 +75,7 @@ async function AdminProductsContent() {
             <button
               id="create-category-submit-btn"
               type="submit"
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#E5A93C] px-4 py-2.5 text-xs font-black text-zinc-950 hover:bg-[#CA8A04]"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#E11D48] px-4 py-2.5 text-xs font-black text-white hover:bg-[#BE123C]"
             >
               <Plus className="h-4 w-4" />
               <span>Crear Categoría</span>
@@ -185,7 +185,7 @@ async function AdminProductsContent() {
                 htmlFor="new-product-image-file"
                 className="mb-1 flex items-center gap-1 text-xs font-semibold text-zinc-300"
               >
-                <Upload className="h-3.5 w-3.5 text-[#E5A93C]" />
+                <Upload className="h-3.5 w-3.5 text-[#E11D48]" />
                 <span>O subir foto desde tu dispositivo</span>
               </label>
               <input
@@ -193,7 +193,7 @@ async function AdminProductsContent() {
                 name="imageFile"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/avif"
-                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3 py-1.5 text-xs text-zinc-300 file:mr-2 file:rounded-lg file:border-0 file:bg-[#E5A93C] file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-zinc-950"
+                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3 py-1.5 text-xs text-zinc-300 file:mr-2 file:rounded-lg file:border-0 file:bg-[#E11D48] file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-white"
               />
             </div>
 
@@ -201,7 +201,7 @@ async function AdminProductsContent() {
               <button
                 id="create-product-submit-btn"
                 type="submit"
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#E5A93C] px-4 py-2.5 text-xs font-black text-zinc-950 hover:bg-[#CA8A04]"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#E11D48] px-4 py-2.5 text-xs font-black text-white hover:bg-[#BE123C]"
               >
                 <Plus className="h-4 w-4" />
                 <span>Guardar Producto en el Menú</span>

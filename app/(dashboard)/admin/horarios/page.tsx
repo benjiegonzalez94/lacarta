@@ -42,7 +42,7 @@ async function ScheduleContent() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-800 bg-[#18181B] p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E5A93C]/15 text-[#E5A93C]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E11D48]/15 text-[#E11D48]">
             <Clock className="h-5 w-5" />
           </div>
           <div>
@@ -75,7 +75,7 @@ async function ScheduleContent() {
           <button
             id="save-business-hours-btn"
             type="submit"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#E5A93C] px-4 py-2.5 text-xs font-black text-zinc-950 hover:bg-[#CA8A04]"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-4 py-2.5 text-xs font-black text-white hover:bg-[#BE123C]"
           >
             <Check className="h-4 w-4" />
             <span>Guardar Horarios</span>
@@ -103,7 +103,7 @@ async function ScheduleContent() {
                     name={`isOpen_${dayOfWeek}`}
                     type="checkbox"
                     defaultChecked={isOpen}
-                    className="h-4 w-4 rounded accent-[#E5A93C]"
+                    className="h-4 w-4 rounded accent-[#E11D48]"
                   />
                   <span className="text-sm font-bold text-zinc-100">
                     {label}

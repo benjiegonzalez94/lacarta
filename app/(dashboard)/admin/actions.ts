@@ -492,7 +492,7 @@ export async function updateTenantSettingsAction(formData: FormData) {
     deliveryFee: formData.get("deliveryFee"),
     address: formData.get("address") || undefined,
     bankDetails: formData.get("bankDetails") || undefined,
-    primaryColor: formData.get("primaryColor") || "#E5A93C",
+    primaryColor: formData.get("primaryColor") || "#E11D48",
     secondaryColor: formData.get("secondaryColor") || "#D34E27",
     logoUrl: formData.get("logoUrl") || undefined,
     bannerUrl: formData.get("bannerUrl") || undefined,

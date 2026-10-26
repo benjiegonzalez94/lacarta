@@ -36,7 +36,7 @@ async function AdminConfigContent() {
               bancarios para transferencias, tarifa base de envío y colores.
             </p>
           </div>
-          <Palette className="h-6 w-6 text-[#E5A93C]" />
+          <Palette className="h-6 w-6 text-[#E11D48]" />
         </div>
 
         <form action={updateTenantSettingsAction} className="mt-5 space-y-4">
@@ -167,8 +167,8 @@ async function AdminConfigContent() {
                 type="text"
                 required
                 pattern="^#[0-9A-Fa-f]{6}$"
-                defaultValue={tenant.primary_color || "#E5A93C"}
-                placeholder="#E5A93C"
+                defaultValue={tenant.primary_color || "#E11D48"}
+                placeholder="#E11D48"
                 className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 font-mono text-sm text-zinc-100"
               />
             </div>
@@ -186,8 +186,8 @@ async function AdminConfigContent() {
                 type="text"
                 required
                 pattern="^#[0-9A-Fa-f]{6}$"
-                defaultValue={tenant.secondary_color || "#CA8A04"}
-                placeholder="#CA8A04"
+                defaultValue={tenant.secondary_color || "#BE123C"}
+                placeholder="#BE123C"
                 className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 font-mono text-sm text-zinc-100"
               />
             </div>
@@ -232,7 +232,7 @@ async function AdminConfigContent() {
           <button
             id="save-tenant-settings-btn"
             type="submit"
-            className="w-full rounded-xl bg-[#E5A93C] px-4 py-3 text-xs font-black text-zinc-950 hover:bg-[#CA8A04]"
+            className="w-full rounded-xl bg-[#E11D48] px-4 py-3 text-xs font-black text-white hover:bg-[#BE123C]"
           >
             Guardar Perfil y Datos Bancarios
           </button>
@@ -250,7 +250,7 @@ async function AdminConfigContent() {
               lo escaneen con LaCarta al sentarse y pidan directo a cocina.
             </p>
           </div>
-          <QrCode className="h-6 w-6 text-[#E5A93C]" />
+          <QrCode className="h-6 w-6 text-[#E11D48]" />
         </div>
 
         <form
@@ -277,7 +277,7 @@ async function AdminConfigContent() {
           <button
             id="create-table-qr-btn"
             type="submit"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#E5A93C] px-4 py-2.5 text-xs font-black text-zinc-950 hover:bg-[#CA8A04]"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-4 py-2.5 text-xs font-black text-white hover:bg-[#BE123C]"
           >
             <Plus className="h-4 w-4" />
             <span>Generar Mesa QR</span>

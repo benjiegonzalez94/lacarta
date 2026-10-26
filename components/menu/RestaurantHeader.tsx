@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Clock,
-  Flame,
   MapPin,
   Phone,
   QrCode,
@@ -10,6 +9,7 @@ import {
   Truck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { formatCurrency } from "@/lib/utils/currency";
 import type {
   ResolvedTable,
@@ -32,7 +32,7 @@ export function RestaurantHeader({
   resolvedTable,
 }: RestaurantHeaderProps) {
   return (
-    <header className="relative overflow-hidden border-b border-zinc-800/80 bg-gradient-to-b from-[#1C1410] via-[#131215] to-[#0F0F11] pt-7 sm:pt-0">
+    <header className="relative overflow-hidden border-b border-zinc-800/80 bg-gradient-to-b from-[#1F0D14] via-[#131215] to-[#0F0F11] pt-7 sm:pt-0">
       {branding.bannerUrl ? (
         <div className="pointer-events-none absolute inset-0 opacity-20">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -55,7 +55,7 @@ export function RestaurantHeader({
           <Link
             id="back-to-lacarta-hub-link"
             href="/"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-[#18181B]/90 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition-colors hover:border-[#E5A93C] hover:text-[#E5A93C]"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-[#18181B]/90 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition-colors hover:border-[#E11D48] hover:text-[#FB7185]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>LaCarta • Locales y Escáner QR</span>
@@ -65,7 +65,7 @@ export function RestaurantHeader({
             <Link
               id="header-scan-table-qr-link"
               href="/?scan=1"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E5A93C]/40 bg-[#E5A93C]/10 px-3 py-1.5 text-xs font-bold text-[#E5A93C] hover:bg-[#E5A93C]/20"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#E11D48]/40 bg-[#E11D48]/10 px-3 py-1.5 text-xs font-bold text-[#FB7185] hover:bg-[#E11D48]/20"
             >
               <QrCode className="h-3.5 w-3.5" />
               <span>¿Estás en una mesa? Escanear QR</span>
@@ -74,13 +74,13 @@ export function RestaurantHeader({
         </div>
 
         {resolvedTable ? (
-          <div className="mb-4 flex items-center justify-between rounded-xl border border-[#E5A93C]/40 bg-[#E5A93C]/10 px-3.5 py-2.5">
+          <div className="mb-4 flex items-center justify-between rounded-xl border border-[#E11D48]/40 bg-[#E11D48]/10 px-3.5 py-2.5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E5A93C] text-zinc-950">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#E11D48] text-white">
                 <QrCode className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#E5A93C]">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#FB7185]">
                   Mesa Enlazada • Atención Directa sin Filas
                 </p>
                 <p className="text-sm font-semibold text-zinc-100">
@@ -94,7 +94,7 @@ export function RestaurantHeader({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#E5A93C]/40 bg-gradient-to-br from-[#271C15] to-[#18181B] shadow-lg shadow-black/50">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#E11D48]/40 bg-gradient-to-br from-[#291219] to-[#18181B] shadow-lg shadow-black/50">
               {tenant.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -103,10 +103,7 @@ export function RestaurantHeader({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <Flame
-                  className="h-8 w-8"
-                  style={{ color: branding.primaryColor }}
-                />
+                <BrandLogo size="lg" />
               )}
             </div>
             <div>

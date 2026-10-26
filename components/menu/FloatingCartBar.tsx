@@ -25,10 +25,10 @@ export function FloatingCartBar({
           id="open-floating-cart-btn"
           type="button"
           onClick={onOpenCart}
-          className="flex w-full items-center justify-between rounded-2xl bg-[#E5A93C] px-5 py-3.5 text-zinc-950 shadow-xl shadow-black/60 transition-all hover:bg-[#CA8A04] active:scale-[0.99]"
+          className="flex w-full items-center justify-between rounded-2xl bg-[#E11D48] px-5 py-3.5 text-white shadow-xl shadow-black/60 transition-all hover:bg-[#BE123C] active:scale-[0.99]"
         >
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-950 text-xs font-black text-[#E5A93C]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-950 text-xs font-black text-[#E11D48]">
               {totalItems}
             </span>
             <div className="text-left">

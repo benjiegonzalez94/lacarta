@@ -42,7 +42,7 @@ export function CartItemRow({
           <h4 className="truncate text-sm font-bold text-zinc-100">
             {item.name}
           </h4>
-          <span className="shrink-0 text-sm font-black text-[#E5A93C]">
+          <span className="shrink-0 text-sm font-black text-[#E11D48]">
             {formatCurrency(item.unitPrice * item.quantity)}
           </span>
         </div>

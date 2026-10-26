@@ -20,7 +20,7 @@ export function AdminModifierGroupsSection({
     <section className="rounded-2xl border border-zinc-800 bg-[#18181B] p-5">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E5A93C]/15 text-[#E5A93C]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E11D48]/15 text-[#E11D48]">
             <SlidersHorizontal className="h-4 w-4" />
           </div>
           <div>
@@ -97,7 +97,7 @@ export function AdminModifierGroupsSection({
           <button
             id="create-mod-group-btn"
             type="submit"
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#E5A93C] px-3 py-2 text-xs font-black text-zinc-950 hover:bg-[#CA8A04]"
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#E11D48] px-3 py-2 text-xs font-black text-white hover:bg-[#BE123C]"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Crear Grupo</span>
@@ -143,7 +143,7 @@ export function AdminModifierGroupsSection({
                   >
                     <span>{opt.name}</span>
                     {Number(opt.price_delta) > 0 ? (
-                      <span className="font-bold text-[#E5A93C]">
+                      <span className="font-bold text-[#E11D48]">
                         +{formatCurrency(Number(opt.price_delta))}
                       </span>
                     ) : null}
@@ -195,7 +195,7 @@ export function AdminModifierGroupsSection({
               <button
                 id={`add-opt-btn-${group.id}`}
                 type="submit"
-                className="inline-flex items-center gap-1 rounded-lg bg-zinc-800 px-2.5 py-1.5 text-xs font-bold text-[#E5A93C] hover:bg-zinc-700"
+                className="inline-flex items-center gap-1 rounded-lg bg-zinc-800 px-2.5 py-1.5 text-xs font-bold text-[#E11D48] hover:bg-zinc-700"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Opción</span>

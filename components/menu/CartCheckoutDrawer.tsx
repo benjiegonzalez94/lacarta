@@ -198,7 +198,7 @@ export function CartCheckoutDrawer({
                   <>
                     Tu pedido ya llegó al panel de{" "}
                     <strong className="text-zinc-200">{tenant.name}</strong> por{" "}
-                    <strong className="text-[#E5A93C]">
+                    <strong className="text-[#E11D48]">
                       {formatCurrency(createdOrder.total)}
                     </strong>{" "}
                     y está siendo preparado para tu{" "}
@@ -240,7 +240,7 @@ export function CartCheckoutDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-800/60 px-4 py-2.5 text-xs font-bold text-zinc-200 hover:border-[#E5A93C]"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-800/60 px-4 py-2.5 text-xs font-bold text-zinc-200 hover:border-[#E11D48]"
             >
               Volver al Menú
             </button>
@@ -272,8 +272,8 @@ export function CartCheckoutDrawer({
               </div>
 
               {resolvedTable ? (
-                <div className="rounded-2xl border border-[#E5A93C]/40 bg-[#E5A93C]/10 p-3.5">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#E5A93C]">
+                <div className="rounded-2xl border border-[#E11D48]/40 bg-[#E11D48]/10 p-3.5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#E11D48]">
                     <QrCode className="h-4 w-4" />
                     <span>
                       Enlazado a Mesa #{resolvedTable.tableNumber} •{" "}
@@ -297,7 +297,7 @@ export function CartCheckoutDrawer({
                       onClick={() => setOrderType("delivery")}
                       className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition-all ${
                         orderType === "delivery"
-                          ? "border-[#E5A93C] bg-[#E5A93C]/15 text-[#E5A93C]"
+                          ? "border-[#E11D48] bg-[#E11D48]/15 text-[#E11D48]"
                           : "border-zinc-800 bg-[#202024] text-zinc-300"
                       }`}
                     >
@@ -310,7 +310,7 @@ export function CartCheckoutDrawer({
                       onClick={() => setOrderType("pickup")}
                       className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition-all ${
                         orderType === "pickup"
-                          ? "border-[#E5A93C] bg-[#E5A93C]/15 text-[#E5A93C]"
+                          ? "border-[#E11D48] bg-[#E11D48]/15 text-[#E11D48]"
                           : "border-zinc-800 bg-[#202024] text-zinc-300"
                       }`}
                     >
@@ -332,7 +332,7 @@ export function CartCheckoutDrawer({
                     onClick={() => setPaymentMethod("cash")}
                     className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-xs font-bold transition-all ${
                       paymentMethod === "cash"
-                        ? "border-[#E5A93C] bg-[#E5A93C]/15 text-[#E5A93C]"
+                        ? "border-[#E11D48] bg-[#E11D48]/15 text-[#E11D48]"
                         : "border-zinc-800 bg-[#202024] text-zinc-300"
                     }`}
                   >
@@ -346,7 +346,7 @@ export function CartCheckoutDrawer({
                     onClick={() => setPaymentMethod("transfer")}
                     className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-xs font-bold transition-all ${
                       paymentMethod === "transfer"
-                        ? "border-[#E5A93C] bg-[#E5A93C]/15 text-[#E5A93C]"
+                        ? "border-[#E11D48] bg-[#E11D48]/15 text-[#E11D48]"
                         : "border-zinc-800 bg-[#202024] text-zinc-300"
                     }`}
                   >
@@ -370,7 +370,7 @@ export function CartCheckoutDrawer({
 
                 {paymentMethod === "transfer" ? (
                   <div className="mt-2 rounded-xl border border-zinc-800 bg-[#141418] p-3 text-xs text-zinc-300">
-                    <p className="font-bold text-[#E5A93C]">
+                    <p className="font-bold text-[#E11D48]">
                       🏦 Pago por Transferencia Bancaria
                     </p>
                     <p className="mt-1 whitespace-pre-line text-[11px] text-zinc-400">
@@ -396,7 +396,7 @@ export function CartCheckoutDrawer({
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Ej: Carlos Mendoza"
-                    className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
+                    className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
                   />
                 </div>
 
@@ -415,7 +415,7 @@ export function CartCheckoutDrawer({
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
                       placeholder="Ej: 0991234567"
-                      className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
+                      className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
                     />
                   </div>
                 ) : null}
@@ -450,7 +450,7 @@ export function CartCheckoutDrawer({
                         value={deliveryAddress}
                         onChange={(e) => setDeliveryAddress(e.target.value)}
                         placeholder="Barrio, calle principal y secundaria"
-                        className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
+                        className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
                       />
                     </div>
                     <div>
@@ -466,7 +466,7 @@ export function CartCheckoutDrawer({
                         value={deliveryReference}
                         onChange={(e) => setDeliveryReference(e.target.value)}
                         placeholder="Casa color crema junto a la farmacia..."
-                        className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
+                        className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
                       />
                     </div>
                   </>
@@ -485,7 +485,7 @@ export function CartCheckoutDrawer({
                     value={orderNotes}
                     onChange={(e) => setOrderNotes(e.target.value)}
                     placeholder="Ej: Sin cebolla, traer vuelto de $20..."
-                    className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
+                    className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
                   />
                 </div>
               </div>
@@ -518,7 +518,7 @@ export function CartCheckoutDrawer({
                 ) : null}
                 <div className="flex justify-between pt-1 text-base font-black text-zinc-50">
                   <span>Total estimado</span>
-                  <span className="text-[#E5A93C]">
+                  <span className="text-[#E11D48]">
                     {formatCurrency(totals.total)}
                   </span>
                 </div>

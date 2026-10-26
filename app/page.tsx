@@ -38,7 +38,7 @@ async function HomeHubContent({ searchParams }: HomePageProps) {
       phone: t.phone,
       address: t.address,
       deliveryFee: Number(t.delivery_fee),
-      primaryColor: t.primary_color || "#E5A93C",
+      primaryColor: t.primary_color || "#E11D48",
       logoUrl: t.logo_url,
       isOpen: schedule.isOpen,
       statusLabel: schedule.statusLabel,

@@ -8,12 +8,12 @@ import {
   Clock,
   Copy,
   ExternalLink,
-  Flame,
   LayoutDashboard,
   LogOut,
   Package,
   Settings,
 } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 import type { TenantRow } from "@/types/domain";
 
@@ -60,9 +60,7 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E5A93C] text-zinc-950">
-              <Flame className="h-5 w-5" />
-            </div>
+            <BrandLogo size="md" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="truncate text-base font-black uppercase tracking-tight text-zinc-50">
@@ -94,7 +92,7 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
             id="copy-seller-menu-link-btn"
             type="button"
             onClick={handleCopyMenuLink}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#E5A93C] px-3 py-2 text-xs font-black text-zinc-950 transition-colors hover:bg-[#CA8A04] sm:flex-initial"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#E11D48] px-3 py-2 text-xs font-black text-white shadow-sm shadow-[#E11D48]/25 transition-colors hover:bg-[#BE123C] sm:flex-initial"
           >
             {copiedMenuLink ? (
               <>
@@ -111,7 +109,7 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
 
           <Link
             href={`/${tenant.slug}`}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-2 text-xs font-semibold text-zinc-100 hover:border-[#E5A93C] hover:text-[#E5A93C]"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-2 text-xs font-semibold text-zinc-100 hover:border-[#E11D48] hover:text-[#FB7185]"
           >
             <span>Ver Carta</span>
             <ExternalLink className="h-3.5 w-3.5" />
@@ -143,7 +141,7 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
                 href={item.href}
                 className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-colors sm:justify-start sm:px-3.5 ${
                   isActive
-                    ? "bg-[#E5A93C] text-zinc-950 shadow-sm"
+                    ? "bg-[#E11D48] text-white shadow-sm shadow-[#E11D48]/30"
                     : "border border-zinc-800/80 bg-[#18181B] text-zinc-300 hover:bg-zinc-800/70 hover:text-zinc-100"
                 }`}
               >

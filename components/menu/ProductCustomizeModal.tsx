@@ -220,7 +220,7 @@ export function ProductCustomizeModal({
                         onClick={() => toggleOption(group, option)}
                         className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
                           isSelected
-                            ? "border-[#E5A93C] bg-[#E5A93C]/12 text-zinc-50"
+                            ? "border-[#E11D48] bg-[#E11D48]/12 text-zinc-50"
                             : isDisabled
                               ? "cursor-not-allowed border-zinc-800/50 bg-zinc-900/40 opacity-50"
                               : "border-zinc-800 bg-[#202024] text-zinc-200 hover:border-zinc-700"
@@ -229,7 +229,7 @@ export function ProductCustomizeModal({
                         <div className="flex items-center gap-2 text-sm font-semibold">
                           <span>{option.name}</span>
                           {delta > 0 ? (
-                            <span className="rounded-md bg-[#E5A93C]/20 px-1.5 py-0.5 text-xs font-bold text-[#E5A93C]">
+                            <span className="rounded-md bg-[#E11D48]/20 px-1.5 py-0.5 text-xs font-bold text-[#E11D48]">
                               +{formatCurrency(delta)}
                             </span>
                           ) : null}
@@ -238,7 +238,7 @@ export function ProductCustomizeModal({
                         <div
                           className={`flex h-5 w-5 items-center justify-center rounded-md border ${
                             isSelected
-                              ? "border-[#E5A93C] bg-[#E5A93C] text-zinc-950"
+                              ? "border-[#E11D48] bg-[#E11D48] text-white"
                               : "border-zinc-600"
                           }`}
                         >
@@ -268,7 +268,7 @@ export function ProductCustomizeModal({
               value={customNotes}
               onChange={(e) => setCustomNotes(e.target.value)}
               placeholder="Ej: Salsa aparte, sin cebolla, bien doradas..."
-              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
+              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
             />
           </div>
 
@@ -312,7 +312,7 @@ export function ProductCustomizeModal({
             id="confirm-customize-add-btn"
             type="button"
             onClick={handleConfirm}
-            className="flex flex-1 items-center justify-between rounded-xl bg-[#E5A93C] px-4 py-3 text-sm font-black text-zinc-950 transition-colors hover:bg-[#CA8A04]"
+            className="flex flex-1 items-center justify-between rounded-xl bg-[#E11D48] px-4 py-3 text-sm font-black text-white transition-colors hover:bg-[#BE123C]"
           >
             <span>Agregar al pedido</span>
             <span>{formatCurrency(lineTotal)}</span>

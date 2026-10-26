@@ -42,7 +42,7 @@ async function AdminGuard({ children }: AdminLayoutProps) {
             <button
               id="claim-pilot-tenant-btn"
               type="submit"
-              className="w-full rounded-xl bg-[#E5A93C] px-4 py-3 text-xs font-black text-zinc-950 hover:bg-[#CA8A04]"
+              className="w-full rounded-xl bg-[#E11D48] px-4 py-3 text-xs font-black text-white hover:bg-[#BE123C]"
             >
               Vincular restaurante piloto (Cowiings) a mi cuenta
             </button>

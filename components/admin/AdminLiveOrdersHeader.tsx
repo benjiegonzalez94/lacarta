@@ -68,10 +68,10 @@ export function AdminLiveOrdersHeader({
   }
 
   return (
-    <div className="rounded-2xl border border-[#E5A93C]/35 bg-gradient-to-r from-[#211910] via-[#18181B] to-[#18181B] p-4 sm:p-5">
+    <div className="rounded-2xl border border-[#E11D48]/35 bg-gradient-to-r from-[#271018] via-[#18181B] to-[#18181B] p-4 sm:p-5">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#E5A93C]">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#E11D48]">
             <Radio className="h-3.5 w-3.5 animate-pulse text-emerald-400" />
             <span>Tu Link Personalizado para Clientes y Redes Sociales</span>
           </div>
@@ -79,7 +79,7 @@ export function AdminLiveOrdersHeader({
             Compártelo en WhatsApp, Instagram o Facebook para recibir pedidos a
             domicilio (con ubicación GPS) o retiro en local:
           </p>
-          <p className="mt-1.5 inline-block rounded-lg border border-zinc-700 bg-[#121215] px-3 py-1 font-mono text-xs font-bold text-[#E5A93C]">
+          <p className="mt-1.5 inline-block rounded-lg border border-zinc-700 bg-[#121215] px-3 py-1 font-mono text-xs font-bold text-[#E11D48]">
             {menuLink}
           </p>
         </div>
@@ -89,7 +89,7 @@ export function AdminLiveOrdersHeader({
             id="dashboard-copy-menu-link-btn"
             type="button"
             onClick={handleCopyLink}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#E5A93C] px-3.5 py-2.5 text-xs font-black text-zinc-950 hover:bg-[#CA8A04]"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3.5 py-2.5 text-xs font-black text-white hover:bg-[#BE123C]"
           >
             {copied ? (
               <>
@@ -122,7 +122,7 @@ export function AdminLiveOrdersHeader({
               router.refresh();
               setTimeout(() => setIsRefreshing(false), 600);
             }}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-2.5 text-xs font-semibold text-zinc-200 hover:border-[#E5A93C]"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-2.5 text-xs font-semibold text-zinc-200 hover:border-[#E11D48]"
           >
             <RefreshCw
               className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}

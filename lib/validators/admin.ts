@@ -85,7 +85,7 @@ export const TenantSettingsSchema = z.object({
     .string()
     .trim()
     .regex(/^#[0-9A-Fa-f]{6}$/, "Color primario hex inválido.")
-    .default("#E5A93C"),
+    .default("#E11D48"),
   secondaryColor: z
     .string()
     .trim()

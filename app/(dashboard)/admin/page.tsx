@@ -67,7 +67,7 @@ async function AdminOverviewContent() {
         </div>
         <div className="rounded-2xl border border-zinc-800 bg-[#18181B] p-4">
           <p className="text-xs text-zinc-400">Productos activos</p>
-          <p className="mt-1 text-2xl font-black text-[#E5A93C]">
+          <p className="mt-1 text-2xl font-black text-[#E11D48]">
             {availableProductsCount} / {data.products.length}
           </p>
         </div>
@@ -140,7 +140,7 @@ async function AdminOverviewContent() {
                   <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-800 pb-3">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[#E5A93C]">
+                        <span className="font-mono text-xs font-bold text-[#E11D48]">
                           #{order.id.slice(0, 8).toUpperCase()}
                         </span>
                         <Badge
@@ -199,7 +199,7 @@ async function AdminOverviewContent() {
                             )}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 rounded-lg border border-[#E5A93C]/40 bg-[#E5A93C]/10 px-2.5 py-1 text-[11px] font-bold text-[#E5A93C] hover:bg-[#E5A93C]/20"
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#E11D48]/40 bg-[#E11D48]/10 px-2.5 py-1 text-[11px] font-bold text-[#E11D48] hover:bg-[#E11D48]/20"
                           >
                             <MapPin className="h-3 w-3" />
                             <span>Ver Ubicación GPS en Mapa</span>
@@ -227,7 +227,7 @@ async function AdminOverviewContent() {
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="text-right">
                         <span className="text-xs text-zinc-400">Total</span>
-                        <p className="text-base font-black text-[#E5A93C]">
+                        <p className="text-base font-black text-[#E11D48]">
                           {formatCurrency(Number(order.total))}
                         </p>
                       </div>
@@ -256,7 +256,7 @@ async function AdminOverviewContent() {
                         <button
                           id={`order-status-save-${order.id}`}
                           type="submit"
-                          className="rounded-xl bg-[#E5A93C] px-3 py-1.5 text-xs font-bold text-zinc-950 hover:bg-[#CA8A04]"
+                          className="rounded-xl bg-[#E11D48] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#BE123C]"
                         >
                           Guardar
                         </button>

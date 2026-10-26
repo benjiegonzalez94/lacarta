@@ -250,7 +250,7 @@ export async function getPublicMenuBySlug(
     },
     branding: {
       slogan: tenant.slogan || "Arte en Sabor",
-      primaryColor: tenant.primary_color || "#E5A93C",
+      primaryColor: tenant.primary_color || "#E11D48",
       secondaryColor: tenant.secondary_color || "#D34E27",
       bannerUrl: tenant.banner_url ?? null,
       taglines: [

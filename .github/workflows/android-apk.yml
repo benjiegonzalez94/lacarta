@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'capacitor.config.json'
+      - 'scripts/configure-android.mjs'
       - '.github/workflows/android-apk.yml'
 
 permissions:
@@ -47,7 +48,7 @@ jobs:
           npm ci
           npm install --no-save @capacitor/core@^7.0.0 @capacitor/cli@^7.0.0 @capacitor/android@^7.0.0
 
-      - name: Prepare Capacitor configuration & web assets
+      - name: Prepare Capacitor configuration, native permissions & red icon
         env:
           INPUT_SERVER_URL: ${{ github.event.inputs.server_url }}
         run: |
@@ -78,19 +79,7 @@ jobs:
 
           npx cap add android
           npx cap sync android
-
-          node -e "
-            const fs = require('fs');
-            const manifestPath = 'android/app/src/main/AndroidManifest.xml';
-            let xml = fs.readFileSync(manifestPath, 'utf8');
-            const perms = [
-              '<uses-permission android:name=\"android.permission.CAMERA\" />',
-              '<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\" />',
-              '<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />'
-            ].join('\n    ');
-            xml = xml.replace('<uses-permission android:name=\"android.permission.INTERNET\" />', '<uses-permission android:name=\"android.permission.INTERNET\" />\n    ' + perms);
-            fs.writeFileSync(manifestPath, xml, 'utf8');
-          "
+          node scripts/configure-android.mjs
 
       - name: Build Debug APK with Gradle
         working-directory: android
@@ -114,7 +103,7 @@ jobs:
         with:
           tag_name: apk-latest
           name: "LaCarta Android APK (Última versión)"
-          body: "Descarga directa del archivo `lacarta-android.apk` con permisos de Cámara QR y Ubicación GPS conectado a `https://lacartaec.vercel.app`."
+          body: "Descarga directa del archivo `lacarta-android.apk` con icono minimalista rojo, lectura nativa de Ubicación GPS + mapa interactivo y Cámara QR conectado a `https://lacartaec.vercel.app`."
           files: ./lacarta-android.apk
           prerelease: false
           make_latest: true

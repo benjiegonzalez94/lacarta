@@ -237,7 +237,7 @@ export function PublicMenuClient({
               id="reset-search-filter-btn"
               type="button"
               onClick={() => setSearchQuery("")}
-              className="mt-3 rounded-xl bg-[#E5A93C] px-4 py-2 text-xs font-bold text-zinc-950"
+              className="mt-3 rounded-xl bg-[#E11D48] px-4 py-2 text-xs font-bold text-white"
             >
               Ver todo el menú
             </button>

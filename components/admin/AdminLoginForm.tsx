@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Flame, Loader2, Lock } from "lucide-react";
+import { ArrowLeft, Loader2, Lock } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 
 export function AdminLoginForm() {
@@ -64,7 +65,7 @@ export function AdminLoginForm() {
           <Link
             id="admin-login-back-home-link"
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-[#E5A93C]"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-[#FB7185]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Volver al inicio</span>
@@ -72,8 +73,8 @@ export function AdminLoginForm() {
         </div>
 
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#E5A93C]/40 bg-[#E5A93C]/10 text-[#E5A93C]">
-            <Flame className="h-7 w-7" />
+          <div className="mb-3">
+            <BrandLogo size="lg" />
           </div>
           <h1 className="text-xl font-black uppercase tracking-tight text-zinc-50">
             LaCarta • Panel Admin
@@ -94,7 +95,7 @@ export function AdminLoginForm() {
             }}
             className={`rounded-lg py-2 text-xs font-bold transition-colors ${
               mode === "signin"
-                ? "bg-[#E5A93C] text-zinc-950"
+                ? "bg-[#E11D48] text-white"
                 : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
@@ -109,7 +110,7 @@ export function AdminLoginForm() {
             }}
             className={`rounded-lg py-2 text-xs font-bold transition-colors ${
               mode === "signup"
-                ? "bg-[#E5A93C] text-zinc-950"
+                ? "bg-[#E11D48] text-white"
                 : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
@@ -132,7 +133,7 @@ export function AdminLoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@cowiings.com"
-              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
+              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
             />
           </div>
 
@@ -151,7 +152,7 @@ export function AdminLoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
+              className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
             />
           </div>
 
@@ -177,7 +178,7 @@ export function AdminLoginForm() {
             id="admin-auth-submit-btn"
             type="submit"
             disabled={isLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#E5A93C] px-4 py-3 text-sm font-black text-zinc-950 transition-colors hover:bg-[#CA8A04] disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#E11D48] px-4 py-3 text-sm font-black text-white shadow-sm shadow-[#E11D48]/30 transition-colors hover:bg-[#BE123C] disabled:opacity-60"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

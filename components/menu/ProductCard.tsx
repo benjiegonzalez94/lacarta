@@ -25,7 +25,7 @@ export function ProductCard({
     <article
       className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border transition-all ${
         meta.isPromo
-          ? "border-[#E5A93C]/50 bg-gradient-to-br from-[#231B12] to-[#18181B]"
+          ? "border-[#E11D48]/50 bg-gradient-to-br from-[#271018] to-[#18181B]"
           : "border-zinc-800/90 bg-[#18181B] hover:border-zinc-700"
       }`}
     >
@@ -66,14 +66,14 @@ export function ProductCard({
                   variant="muted"
                   className="bg-black/65 backdrop-blur-md"
                 >
-                  <Flame className="h-3 w-3 text-[#E5A93C]" />
+                  <Flame className="h-3 w-3 text-[#E11D48]" />
                   {group.name}
                 </Badge>
               ))}
             </div>
 
             {quantityInCart > 0 ? (
-              <span className="inline-flex h-6 items-center rounded-full bg-[#E5A93C] px-2.5 text-xs font-black text-zinc-950 shadow-md">
+              <span className="inline-flex h-6 items-center rounded-full bg-[#E11D48] px-2.5 text-xs font-black text-white shadow-md">
                 {quantityInCart} en pedido
               </span>
             ) : null}
@@ -81,7 +81,7 @@ export function ProductCard({
         </div>
 
         <div className="px-4 pt-3">
-          <h3 className="text-base font-bold text-zinc-100 transition-colors group-hover:text-[#E5A93C]">
+          <h3 className="text-base font-bold text-zinc-100 transition-colors group-hover:text-[#E11D48]">
             {product.name}
           </h3>
 
@@ -96,7 +96,7 @@ export function ProductCard({
       <div className="mx-4 mt-4 mb-4 flex items-center justify-between border-t border-zinc-800/80 pt-3">
         <div>
           <span className="text-xs text-zinc-400">Precio</span>
-          <p className="text-lg font-black tracking-tight text-[#E5A93C]">
+          <p className="text-lg font-black tracking-tight text-[#E11D48]">
             {formatCurrency(product.price)}
           </p>
         </div>
@@ -105,7 +105,7 @@ export function ProductCard({
           id={`add-product-btn-${product.id}`}
           type="button"
           onClick={() => onSelectProduct(product)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#E5A93C] px-3.5 py-2 text-xs font-bold text-zinc-950 shadow-sm transition-all hover:bg-[#CA8A04] active:scale-95"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#BE123C] active:scale-95"
         >
           <Plus className="h-4 w-4 stroke-[2.5]" />
           <span>{requiresCustomization ? "Personalizar" : "Agregar"}</span>

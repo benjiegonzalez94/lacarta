@@ -60,7 +60,7 @@ export function CategoryTabs({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Buscar alitas, hamburguesas, batidos..."
-            className="w-full rounded-xl border border-zinc-800 bg-[#18181B] py-2 pr-9 pl-10 text-sm text-zinc-100 placeholder-zinc-500 transition-colors focus:border-[#E5A93C] focus:outline-none"
+            className="w-full rounded-xl border border-zinc-800 bg-[#18181B] py-2 pr-9 pl-10 text-sm text-zinc-100 placeholder-zinc-500 transition-colors focus:border-[#E11D48] focus:outline-none"
           />
           {searchQuery ? (
             <button
@@ -89,7 +89,7 @@ export function CategoryTabs({
                 onClick={() => onSelectCategory(category.id)}
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
                   isActive
-                    ? "bg-[#E5A93C] text-zinc-950 shadow-sm shadow-[#E5A93C]/30"
+                    ? "bg-[#E11D48] text-white shadow-sm shadow-[#E11D48]/30"
                     : "border border-zinc-800 bg-[#18181B] text-zinc-300 hover:border-zinc-700 hover:text-zinc-100"
                 }`}
               >

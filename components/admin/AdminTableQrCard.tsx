@@ -157,9 +157,9 @@ export function AdminTableQrCard({
             id={`toggle-qr-view-${table.id}`}
             type="button"
             onClick={() => setShowQr((v) => !v)}
-            className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E5A93C] hover:text-[#E5A93C]"
+            className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E11D48] hover:text-[#E11D48]"
           >
-            <QrCode className="h-3.5 w-3.5 text-[#E5A93C]" />
+            <QrCode className="h-3.5 w-3.5 text-[#E11D48]" />
             <span>{showQr ? "Ocultar Tablero" : "Ver Tablero QR"}</span>
           </button>
 
@@ -167,7 +167,7 @@ export function AdminTableQrCard({
             id={`print-qr-board-${table.id}`}
             type="button"
             onClick={handlePrintBoard}
-            className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E5A93C] hover:text-[#E5A93C]"
+            className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E11D48] hover:text-[#E11D48]"
           >
             <Printer className="h-3.5 w-3.5" />
             <span>Imprimir</span>
@@ -177,7 +177,7 @@ export function AdminTableQrCard({
             id={`copy-qr-url-${table.id}`}
             type="button"
             onClick={handleCopy}
-            className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E5A93C]"
+            className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 hover:border-[#E11D48]"
           >
             {copied ? (
               <>
@@ -194,7 +194,7 @@ export function AdminTableQrCard({
 
           <Link
             href={relativePath}
-            className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-[#E5A93C] hover:border-[#E5A93C]"
+            className="inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-1.5 text-xs font-semibold text-[#E11D48] hover:border-[#E11D48]"
           >
             <span>Probar</span>
             <ExternalLink className="h-3.5 w-3.5" />

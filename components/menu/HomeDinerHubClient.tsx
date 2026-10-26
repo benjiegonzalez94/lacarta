@@ -18,6 +18,7 @@ import {
   type QuickTableItem,
 } from "@/components/menu/TableQrScannerModal";
 import { Badge } from "@/components/ui/Badge";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export interface DirectoryTenantItem {
   id: string;
@@ -49,13 +50,11 @@ export function HomeDinerHubClient({
 
   return (
     <div className="relative flex min-h-screen flex-col justify-between overflow-x-hidden bg-[#0F0F11] text-zinc-50">
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-80 w-[28rem] -translate-x-1/2 rounded-full bg-[#E5A93C]/12 blur-3xl" />
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-80 w-[28rem] -translate-x-1/2 rounded-full bg-[#E11D48]/15 blur-3xl" />
 
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-9 pb-4 sm:px-6 sm:py-6">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E5A93C] text-zinc-950 shadow-md shadow-[#E5A93C]/20">
-            <Flame className="h-5 w-5" />
-          </div>
+          <BrandLogo size="md" />
           <div>
             <span className="text-lg font-black uppercase tracking-tight text-zinc-50">
               LaCarta
@@ -69,15 +68,15 @@ export function HomeDinerHubClient({
         <Link
           id="nav-admin-link"
           href="/admin"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-[#18181B] px-3.5 py-2 text-xs font-bold text-zinc-200 transition-colors hover:border-[#E5A93C] hover:text-[#E5A93C]"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-[#18181B] px-3.5 py-2 text-xs font-bold text-zinc-200 transition-colors hover:border-[#E11D48] hover:text-[#FB7185]"
         >
-          <LayoutDashboard className="h-4 w-4 text-[#E5A93C]" />
+          <LayoutDashboard className="h-4 w-4 text-[#E11D48]" />
           <span>Soy Vendedor</span>
         </Link>
       </header>
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-4 sm:px-6 sm:py-8">
-        <section className="rounded-3xl border border-[#E5A93C]/35 bg-gradient-to-br from-[#231A10] via-[#18181B] to-[#131316] p-5 shadow-xl sm:p-8">
+        <section className="rounded-3xl border border-[#E11D48]/35 bg-gradient-to-br from-[#271018] via-[#18181B] to-[#131316] p-5 shadow-xl sm:p-8">
           <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
             <div className="space-y-2">
               <Badge variant="primary">
@@ -86,7 +85,7 @@ export function HomeDinerHubClient({
               </Badge>
               <h1 className="text-2xl font-black tracking-tight text-zinc-50 sm:text-4xl">
                 ¿Llegaste a un restaurante?{" "}
-                <span className="text-[#E5A93C]">
+                <span className="text-[#FB7185]">
                   Siéntate, escanea tu mesa y pide al instante
                 </span>
               </h1>
@@ -101,7 +100,7 @@ export function HomeDinerHubClient({
               id="open-qr-scanner-hero-btn"
               type="button"
               onClick={() => setIsScannerOpen(true)}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2.5 rounded-2xl bg-[#E5A93C] px-6 py-4 text-sm font-black text-zinc-950 shadow-lg shadow-[#E5A93C]/25 transition-all hover:bg-[#CA8A04] active:scale-95 sm:w-auto"
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2.5 rounded-2xl bg-[#E11D48] px-6 py-4 text-sm font-black text-white shadow-lg shadow-[#E11D48]/30 transition-all hover:bg-[#BE123C] active:scale-95 sm:w-auto"
             >
               <Camera className="h-5 w-5" />
               <span>Escanear QR de Mesa</span>
@@ -130,7 +129,7 @@ export function HomeDinerHubClient({
                 className="flex flex-col justify-between gap-4 rounded-3xl border border-zinc-800 bg-[#18181B] p-5 transition-colors hover:border-zinc-700 sm:flex-row sm:items-center"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#E5A93C]/40 bg-gradient-to-br from-[#271C15] to-[#121215]">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#E11D48]/40 bg-gradient-to-br from-[#291219] to-[#121215]">
                     {t.logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -166,7 +165,7 @@ export function HomeDinerHubClient({
                     </p>
                     {t.address ? (
                       <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-500">
-                        <MapPin className="h-3 w-3 text-[#E5A93C]" />
+                        <MapPin className="h-3 w-3 text-[#E11D48]" />
                         <span>{t.address}</span>
                       </p>
                     ) : null}
@@ -177,7 +176,7 @@ export function HomeDinerHubClient({
                   <Link
                     id={`open-tenant-menu-${t.slug}`}
                     href={`/${t.slug}`}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#E5A93C] px-4 py-3 text-xs font-black text-zinc-950 transition-colors hover:bg-[#CA8A04]"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#E11D48] px-4 py-3 text-xs font-black text-white shadow-sm shadow-[#E11D48]/25 transition-colors hover:bg-[#BE123C]"
                   >
                     <Truck className="h-4 w-4" />
                     <span>Ver Menú (Domicilio / Retiro)</span>
@@ -187,9 +186,9 @@ export function HomeDinerHubClient({
                     id={`scan-table-for-${t.slug}`}
                     type="button"
                     onClick={() => setIsScannerOpen(true)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-[#202024] px-4 py-2.5 text-xs font-bold text-zinc-100 transition-colors hover:border-[#E5A93C] hover:text-[#E5A93C]"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-[#202024] px-4 py-2.5 text-xs font-bold text-zinc-100 transition-colors hover:border-[#E11D48] hover:text-[#FB7185]"
                   >
-                    <QrCode className="h-4 w-4 text-[#E5A93C]" />
+                    <QrCode className="h-4 w-4 text-[#E11D48]" />
                     <span>Estoy en una Mesa (QR)</span>
                   </button>
                 </div>
@@ -200,7 +199,7 @@ export function HomeDinerHubClient({
 
         <section className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-zinc-800/90 bg-[#18181B] p-4">
-            <Utensils className="h-5 w-5 text-[#E5A93C]" />
+            <Utensils className="h-5 w-5 text-[#E11D48]" />
             <h3 className="mt-2 text-xs font-bold uppercase text-zinc-100">
               1. En el Restaurante (Mesa QR)
             </h3>
@@ -222,7 +221,7 @@ export function HomeDinerHubClient({
           </div>
 
           <div className="rounded-2xl border border-zinc-800/90 bg-[#18181B] p-4">
-            <Store className="h-5 w-5 text-[#E5A93C]" />
+            <Store className="h-5 w-5 text-[#E11D48]" />
             <h3 className="mt-2 text-xs font-bold uppercase text-zinc-100">
               3. Perfil para Vendedores
             </h3>
@@ -239,7 +238,7 @@ export function HomeDinerHubClient({
           <span>LaCarta • Menús Digitales, Domicilio GPS y Mesas QR</span>
           <Link
             href="/admin"
-            className="inline-flex items-center gap-1 font-semibold text-zinc-400 hover:text-[#E5A93C]"
+            className="inline-flex items-center gap-1 font-semibold text-zinc-400 hover:text-[#FB7185]"
           >
             <MessageCircle className="h-3.5 w-3.5" />
             <span>Administrar mi negocio</span>
