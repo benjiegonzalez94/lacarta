@@ -10,6 +10,7 @@ export type BusinessHourRow = Tables<"business_hours">;
 export type ModifierGroupRow = Tables<"modifier_groups">;
 export type ModifierOptionRow = Tables<"modifier_options">;
 export type ProductModifierGroupRow = Tables<"product_modifier_groups">;
+export type ProfileRow = Tables<"profiles">;
 
 export type OrderType = "delivery" | "pickup" | "dine_in";
 
@@ -166,6 +167,9 @@ export interface CustomerProfile {
   cedula: string;
   phone: string;
   avatarUrl: string;
+  city?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   savedOrders: Array<{
     orderId: string;
     tenantSlug: string;

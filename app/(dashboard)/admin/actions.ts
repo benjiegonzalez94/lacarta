@@ -497,12 +497,21 @@ export async function updateTenantSettingsAction(formData: FormData) {
     resolvedLogoUrl = uploadedLogo;
   }
 
+  const rawLat = formData.get("latitude");
+  const rawLng = formData.get("longitude");
+
   const parsed = TenantSettingsSchema.safeParse({
     name: formData.get("name"),
     slogan: formData.get("slogan") || "Arte en Sabor",
     phone: formData.get("phone"),
     deliveryFee: formData.get("deliveryFee") ?? 0,
+    city: formData.get("city") || "Quito",
     address: formData.get("address") || undefined,
+    latitude:
+      typeof rawLat === "string" && rawLat.trim().length > 0 ? rawLat : null,
+    longitude:
+      typeof rawLng === "string" && rawLng.trim().length > 0 ? rawLng : null,
+    googleMapsUrl: formData.get("googleMapsUrl") || undefined,
     bankDetails: formData.get("bankDetails") || undefined,
     primaryColor: formData.get("primaryColor") || "#E11D48",
     secondaryColor: formData.get("secondaryColor") || "#BE123C",
@@ -521,7 +530,11 @@ export async function updateTenantSettingsAction(formData: FormData) {
       slogan: parsed.data.slogan,
       phone: parsed.data.phone,
       delivery_fee: parsed.data.deliveryFee,
+      city: parsed.data.city,
       address: parsed.data.address,
+      latitude: parsed.data.latitude,
+      longitude: parsed.data.longitude,
+      google_maps_url: parsed.data.googleMapsUrl,
       bank_details: parsed.data.bankDetails,
       primary_color: parsed.data.primaryColor,
       secondary_color: parsed.data.secondaryColor,

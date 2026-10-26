@@ -138,7 +138,111 @@ if (!fs.existsSync(androidRoot)) {
   process.exit(0);
 }
 
-// Generate minimalist crimson-red launcher icons across all Android mipmap folders
+// 1. Patch AndroidManifest.xml with Location permissions for city discovery
+const manifestPath = path.join(androidRoot, "AndroidManifest.xml");
+let manifestXml = fs.readFileSync(manifestPath, "utf8");
+const permissionsBlock = `
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />`;
+
+if (!manifestXml.includes("android.permission.ACCESS_FINE_LOCATION")) {
+  manifestXml = manifestXml.replace(
+    '<uses-permission android:name="android.permission.INTERNET" />',
+    '<uses-permission android:name="android.permission.INTERNET" />' +
+      permissionsBlock
+  );
+  fs.writeFileSync(manifestPath, manifestXml, "utf8");
+  console.log("Patched AndroidManifest.xml with LOCATION permissions.");
+}
+
+// 2. Patch MainActivity.java to grant WebView Geolocation on demand
+const mainActivityPath = path.join(
+  androidRoot,
+  "java/com/lacarta/app/MainActivity.java"
+);
+const mainActivityJava = `package com.lacarta.app;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.webkit.GeolocationPermissions;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
+
+public class MainActivity extends BridgeActivity {
+    private static final int REQ_LOCATION_WEBVIEW = 1002;
+    private GeolocationPermissions.Callback pendingGeoCallback;
+    private String pendingGeoOrigin;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        configureWebViewLocation();
+    }
+
+    private void configureWebViewLocation() {
+        if (this.bridge == null || this.bridge.getWebView() == null) {
+            return;
+        }
+        WebView webView = this.bridge.getWebView();
+        WebSettings settings = webView.getSettings();
+        settings.setGeolocationEnabled(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+        webView.setWebChromeClient(new BridgeWebChromeClient(this.bridge) {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                boolean hasLocation =
+                    ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+                if (hasLocation) {
+                    callback.invoke(origin, true, false);
+                } else {
+                    pendingGeoOrigin = origin;
+                    pendingGeoCallback = callback;
+                    ActivityCompat.requestPermissions(
+                        MainActivity.this,
+                        new String[] {
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        },
+                        REQ_LOCATION_WEBVIEW
+                    );
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_LOCATION_WEBVIEW && pendingGeoCallback != null) {
+            boolean granted = false;
+            for (int res : grantResults) {
+                if (res == PackageManager.PERMISSION_GRANTED) {
+                    granted = true;
+                    break;
+                }
+            }
+            pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
+            pendingGeoCallback = null;
+            pendingGeoOrigin = null;
+        }
+    }
+}
+`;
+
+fs.mkdirSync(path.dirname(mainActivityPath), { recursive: true });
+fs.writeFileSync(mainActivityPath, mainActivityJava, "utf8");
+
+// 3. Generate minimalist crimson-red launcher icons across all Android mipmap folders
 const mipmapSpecs = [
   { folder: "mipmap-mdpi", size: 48, fgSize: 108 },
   { folder: "mipmap-hdpi", size: 72, fgSize: 162 },

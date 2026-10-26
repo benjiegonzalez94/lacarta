@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowLeft, Clock, MapPin } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Navigation } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { buildDirectionsUrl } from "@/lib/utils/location";
 import type {
   ResolvedTable,
   ScheduleStatus,
@@ -21,10 +22,19 @@ export function RestaurantHeader({
   branding,
   schedule,
 }: RestaurantHeaderProps) {
+  const directionsHref = buildDirectionsUrl({
+    name: tenant.name,
+    address: tenant.address,
+    city: tenant.city,
+    latitude: tenant.latitude !== null ? Number(tenant.latitude) : null,
+    longitude: tenant.longitude !== null ? Number(tenant.longitude) : null,
+    googleMapsUrl: tenant.google_maps_url,
+  });
+
   return (
     <header className="relative overflow-hidden border-b border-zinc-800/80 bg-[#121215] pt-7 sm:pt-0">
       <div className="relative mx-auto max-w-3xl px-4 pt-3 pb-4 sm:pt-5">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between gap-2">
           <Link
             id="back-to-lacarta-hub-link"
             href="/"
@@ -33,6 +43,17 @@ export function RestaurantHeader({
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Locales</span>
           </Link>
+
+          <a
+            id="header-directions-gps-btn"
+            href={directionsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E11D48]/40 bg-[#E11D48]/15 px-3 py-1.5 text-xs font-bold text-[#FB7185] transition-colors hover:bg-[#E11D48]/25"
+          >
+            <Navigation className="h-3.5 w-3.5" />
+            <span>Cómo llegar</span>
+          </a>
         </div>
 
         <div className="flex items-center gap-3.5">
@@ -63,6 +84,13 @@ export function RestaurantHeader({
                 <Clock className="h-3 w-3 text-[#E11D48]" />
                 {schedule.notice}
               </span>
+            </p>
+            <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-zinc-300">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-[#FB7185]" />
+              <span className="font-semibold">{tenant.city || "Quito"}</span>
+              {tenant.address ? (
+                <span className="text-zinc-400">• {tenant.address}</span>
+              ) : null}
             </p>
           </div>
         </div>

@@ -1,28 +1,45 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Camera,
   CheckCircle2,
-  CreditCard,
   History,
   IdCard,
   Loader2,
+  LocateFixed,
+  LogOut,
+  MapPin,
   Phone,
   ShieldAlert,
   ShieldCheck,
   User,
   X,
 } from "lucide-react";
+import { updateCustomerProfileServerAction } from "@/app/auth-actions";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils/currency";
+import {
+  ECUADOR_CITIES,
+  resolveNearestEcuadorCity,
+} from "@/lib/utils/location";
 import type { CustomerProfile } from "@/types/domain";
 
 const PROFILE_STORAGE_KEY = "lacarta_customer_profile_v1";
 
 export function readStoredCustomerProfile(): CustomerProfile {
   if (typeof window === "undefined") {
-    return { name: "", cedula: "", phone: "", avatarUrl: "", savedOrders: [] };
+    return {
+      name: "",
+      cedula: "",
+      phone: "",
+      avatarUrl: "",
+      city: "Quito",
+      latitude: null,
+      longitude: null,
+      savedOrders: [],
+    };
   }
   try {
     const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
@@ -32,6 +49,9 @@ export function readStoredCustomerProfile(): CustomerProfile {
         cedula: "",
         phone: "",
         avatarUrl: "",
+        city: "Quito",
+        latitude: null,
+        longitude: null,
         savedOrders: [],
       };
     }
@@ -41,10 +61,23 @@ export function readStoredCustomerProfile(): CustomerProfile {
       cedula: typeof parsed.cedula === "string" ? parsed.cedula : "",
       phone: typeof parsed.phone === "string" ? parsed.phone : "",
       avatarUrl: typeof parsed.avatarUrl === "string" ? parsed.avatarUrl : "",
+      city:
+        typeof parsed.city === "string" && parsed.city ? parsed.city : "Quito",
+      latitude: typeof parsed.latitude === "number" ? parsed.latitude : null,
+      longitude: typeof parsed.longitude === "number" ? parsed.longitude : null,
       savedOrders: Array.isArray(parsed.savedOrders) ? parsed.savedOrders : [],
     };
   } catch {
-    return { name: "", cedula: "", phone: "", avatarUrl: "", savedOrders: [] };
+    return {
+      name: "",
+      cedula: "",
+      phone: "",
+      avatarUrl: "",
+      city: "Quito",
+      latitude: null,
+      longitude: null,
+      savedOrders: [],
+    };
   }
 }
 
@@ -70,6 +103,7 @@ export function CustomerProfileDrawer({
   onOpenOrderTracker,
   onProfileUpdated,
 }: CustomerProfileDrawerProps) {
+  const router = useRouter();
   const [name, setName] = useState(() => readStoredCustomerProfile().name);
   const [cedula, setCedula] = useState(
     () => readStoredCustomerProfile().cedula
@@ -78,10 +112,20 @@ export function CustomerProfileDrawer({
   const [avatarUrl, setAvatarUrl] = useState(
     () => readStoredCustomerProfile().avatarUrl
   );
+  const [city, setCity] = useState(
+    () => readStoredCustomerProfile().city || "Quito"
+  );
+  const [latitude, setLatitude] = useState<number | null>(
+    () => readStoredCustomerProfile().latitude ?? null
+  );
+  const [longitude, setLongitude] = useState<number | null>(
+    () => readStoredCustomerProfile().longitude ?? null
+  );
   const [savedOrders] = useState<CustomerProfile["savedOrders"]>(
     () => readStoredCustomerProfile().savedOrders
   );
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [detectingGps, setDetectingGps] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [trustInfo, setTrustInfo] = useState<{
     completed: number;
@@ -99,28 +143,28 @@ export function CustomerProfileDrawer({
     if (stored.phone.trim().length >= 7) {
       const supabase = createClient();
       void supabase
-        .rpc("get_customer_trust_profile", { p_phone: stored.phone.trim() })
+        .rpc("get_customer_trust_profile", {
+          p_phone: stored.phone.trim(),
+        })
         .then(({ data }) => {
-          if (data && data.length > 0) {
-            const row = data[0];
+          if (data && typeof data === "object" && !Array.isArray(data)) {
+            const payload = data as Record<string, unknown>;
             setTrustInfo({
-              completed: row.completed_orders,
-              noShows: row.no_show_orders,
-              cashAllowed: row.cash_allowed,
-              maxCashRemote: Number(row.max_cash_remote),
-              tier: row.trust_tier,
+              completed: Number(payload.completed_count ?? 0),
+              noShows: Number(payload.no_show_count ?? 0),
+              cashAllowed: Boolean(payload.cash_allowed ?? true),
+              maxCashRemote: Number(payload.max_cash_remote ?? 20),
+              tier: String(payload.trust_tier ?? "new"),
             });
           }
         });
     }
-  }, [isOpen, phone]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  async function handleAvatarChange(file: File | null) {
     if (!file) return;
-
     setUploadingAvatar(true);
     try {
       const supabase = createClient();
@@ -128,115 +172,123 @@ export function CustomerProfileDrawer({
       const filePath = `customers/${Date.now()}-${Math.random()
         .toString(36)
         .slice(2, 8)}.${ext}`;
-
       const { error } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { cacheControl: "3600", upsert: false });
-
+        .upload(filePath, file, {
+          contentType: file.type || "image/jpeg",
+          upsert: false,
+        });
       if (!error) {
-        const { data: pub } = supabase.storage
+        const { data } = supabase.storage
           .from("avatars")
           .getPublicUrl(filePath);
-        if (pub?.publicUrl) {
-          setAvatarUrl(pub.publicUrl);
-          setUploadingAvatar(false);
-          return;
-        }
+        setAvatarUrl(data.publicUrl);
       }
-
-      // Fallback compact data URL
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const size = 200;
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, size, size);
-            setAvatarUrl(canvas.toDataURL("image/jpeg", 0.7).slice(0, 1990));
-          }
-          setUploadingAvatar(false);
-        };
-        img.src = String(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } catch {
+    } finally {
       setUploadingAvatar(false);
     }
   }
 
-  function handleSaveProfile(e: React.FormEvent) {
-    e.preventDefault();
+  function handleDetectCityGps() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    setDetectingGps(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lng = Number(pos.coords.longitude.toFixed(6));
+        const nearest = resolveNearestEcuadorCity(lat, lng);
+        setLatitude(lat);
+        setLongitude(lng);
+        setCity(nearest.name);
+        setDetectingGps(false);
+      },
+      () => {
+        setDetectingGps(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
+
+  async function handleSaveProfile() {
+    const current = readStoredCustomerProfile();
     const updated: CustomerProfile = {
+      ...current,
       name: name.trim(),
       cedula: cedula.trim(),
       phone: phone.trim(),
       avatarUrl: avatarUrl.trim(),
-      savedOrders,
+      city,
+      latitude,
+      longitude,
     };
     saveCustomerProfileToStorage(updated);
     onProfileUpdated?.(updated);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2000);
+
+    void updateCustomerProfileServerAction({
+      fullName: updated.name,
+      cedula: updated.cedula,
+      phone: updated.phone,
+      avatarUrl: updated.avatarUrl,
+      city: updated.city,
+      latitude: updated.latitude ?? null,
+      longitude: updated.longitude ?? null,
+    });
+  }
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    onClose();
+    router.push("/");
+    router.refresh();
   }
 
   return (
     <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="customer-profile-title"
-      className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-xs"
+      aria-labelledby="customer-profile-drawer-title"
     >
-      <div className="flex h-full w-full max-w-md flex-col border-l border-zinc-800 bg-[#18181B] pt-[env(safe-area-inset-top)] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-5 pt-6 pb-4 sm:pt-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E11D48] text-white">
-              <User className="h-5 w-5" />
-            </div>
-            <div>
-              <h2
-                id="customer-profile-title"
-                className="text-base font-black uppercase text-zinc-50"
-              >
-                Mi Perfil de Cliente
-              </h2>
-              <p className="text-[11px] text-zinc-400">
-                Información básica y estado de tus pedidos
-              </p>
-            </div>
-          </div>
-
+      <div className="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-zinc-800 bg-[#18181B] text-zinc-50 shadow-2xl sm:rounded-3xl">
+        {/* Minimalist Header */}
+        <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
+          <h2
+            id="customer-profile-drawer-title"
+            className="text-base font-black text-zinc-50"
+          >
+            Mi Perfil Personal
+          </h2>
           <button
             id="close-customer-profile-btn"
             type="button"
             onClick={onClose}
             aria-label="Cerrar mi perfil"
-            className="rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+            className="rounded-full p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto p-5">
-          <form
-            onSubmit={handleSaveProfile}
-            className="space-y-3.5 rounded-2xl border border-zinc-800 bg-[#141418] p-4"
-          >
-            {/* Avatar / Profile Photo */}
-            <div className="flex items-center gap-3.5">
-              <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#E11D48] bg-[#202024]">
+        <div className="flex-1 space-y-4 overflow-y-auto p-5">
+          {/* Avatar + Identity Form */}
+          <div className="space-y-3.5 rounded-2xl border border-zinc-800 bg-[#121215] p-4">
+            {/* Avatar Photo Upload */}
+            <div className="flex items-center gap-4">
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-[#E11D48] bg-zinc-900">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={avatarUrl}
-                    alt={name || "Foto de perfil"}
+                    alt="Foto de perfil"
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <User className="h-7 w-7 text-zinc-400" />
+                  <div className="flex h-full w-full items-center justify-center text-zinc-500">
+                    <User className="h-7 w-7" />
+                  </div>
                 )}
               </div>
               <div>
@@ -244,196 +296,233 @@ export function CustomerProfileDrawer({
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  onChange={handleAvatarChange}
                   className="hidden"
+                  onChange={(e) =>
+                    void handleAvatarChange(e.target.files?.[0] ?? null)
+                  }
                 />
                 <button
                   id="upload-customer-avatar-btn"
                   type="button"
                   disabled={uploadingAvatar}
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-[#202024] px-3 py-1.5 text-xs font-bold text-zinc-100 hover:border-[#E11D48]"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-bold text-zinc-100 hover:border-[#E11D48]"
                 >
                   {uploadingAvatar ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#E11D48]" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#FB7185]" />
                   ) : (
-                    <Camera className="h-3.5 w-3.5 text-[#E11D48]" />
+                    <Camera className="h-3.5 w-3.5 text-[#FB7185]" />
                   )}
                   <span>
-                    {uploadingAvatar
-                      ? "Subiendo..."
-                      : "Cambiar foto de perfil"}
+                    {uploadingAvatar ? "Subiendo..." : "Cambiar foto"}
                   </span>
                 </button>
-                <p className="mt-1 text-[10px] text-zinc-500">
-                  Visible al realizar tus pedidos en el local
-                </p>
               </div>
             </div>
 
             <div>
               <label
-                htmlFor="profile-customer-name"
+                htmlFor="profile-name-input"
                 className="mb-1 block text-xs font-semibold text-zinc-400"
               >
-                Nombre y Apellido *
+                Nombre y Apellido
               </label>
-              <input
-                id="profile-customer-name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ej: Benjamín González"
-                className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
-              />
+              <div className="relative">
+                <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <input
+                  id="profile-name-input"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ej. Andrés Pérez"
+                  className="w-full rounded-xl border border-zinc-800 bg-[#18181B] py-2.5 pl-9 pr-3 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
+                />
+              </div>
             </div>
 
             <div>
               <label
-                htmlFor="profile-customer-cedula"
+                htmlFor="profile-cedula-input"
                 className="mb-1 block text-xs font-semibold text-zinc-400"
               >
-                Cédula de Identidad *
+                Cédula de Identidad
               </label>
               <div className="relative">
-                <IdCard className="pointer-events-none absolute top-2.5 left-3 h-3.5 w-3.5 text-zinc-500" />
+                <IdCard className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
                 <input
-                  id="profile-customer-cedula"
+                  id="profile-cedula-input"
                   type="text"
                   inputMode="numeric"
-                  maxLength={13}
-                  required
                   value={cedula}
                   onChange={(e) => setCedula(e.target.value)}
-                  placeholder="Ej: 0912345678"
-                  className="w-full rounded-xl border border-zinc-800 bg-[#202024] py-2 pr-3 pl-8 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
+                  placeholder="Ej. 1712345678"
+                  className="w-full rounded-xl border border-zinc-800 bg-[#18181B] py-2.5 pl-9 pr-3 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
                 />
               </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="profile-customer-phone"
-                className="mb-1 block text-xs font-semibold text-zinc-400"
-              >
-                Celular / WhatsApp *
-              </label>
-              <div className="relative">
-                <Phone className="pointer-events-none absolute top-2.5 left-3 h-3.5 w-3.5 text-zinc-500" />
-                <input
-                  id="profile-customer-phone"
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="0991234567"
-                  className="w-full rounded-xl border border-zinc-800 bg-[#202024] py-2 pr-3 pl-8 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
-                />
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="profile-phone-input"
+                  className="mb-1 block text-xs font-semibold text-zinc-400"
+                >
+                  Teléfono / WhatsApp
+                </label>
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                  <input
+                    id="profile-phone-input"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="0991234567"
+                    className="w-full rounded-xl border border-zinc-800 bg-[#18181B] py-2.5 pl-9 pr-3 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E11D48] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="profile-city-select"
+                  className="mb-1 flex items-center justify-between text-xs font-semibold text-zinc-400"
+                >
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-[#FB7185]" />
+                    <span>Ciudad</span>
+                  </span>
+                  <button
+                    id="profile-detect-city-gps-btn"
+                    type="button"
+                    onClick={handleDetectCityGps}
+                    disabled={detectingGps}
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-[#FB7185] hover:underline"
+                  >
+                    {detectingGps ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <LocateFixed className="h-3 w-3" />
+                    )}
+                    <span>GPS</span>
+                  </button>
+                </label>
+                <select
+                  id="profile-city-select"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-800 bg-[#18181B] px-3 py-2.5 text-sm text-zinc-100 focus:border-[#E11D48] focus:outline-none"
+                >
+                  {ECUADOR_CITIES.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
             <button
               id="save-customer-profile-btn"
-              type="submit"
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#E11D48] px-4 py-2.5 text-xs font-black text-white hover:bg-[#BE123C]"
+              type="button"
+              onClick={() => void handleSaveProfile()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#E11D48] px-4 py-2.5 text-xs font-black text-white hover:bg-[#BE123C]"
             >
               {savedSuccess ? (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
-                  <span>¡Perfil guardado!</span>
+                  <span>Perfil Guardado</span>
                 </>
               ) : (
-                <span>Guardar mi Perfil</span>
+                <span>Guardar mi perfil</span>
               )}
             </button>
-          </form>
-
-          {/* Trust & Anti-No-Show Status */}
-          <div className="rounded-2xl border border-zinc-800 bg-[#141418] p-4">
-            <div className="flex items-center gap-2">
-              {trustInfo?.cashAllowed === false ? (
-                <ShieldAlert className="h-4 w-4 text-red-400" />
-              ) : (
-                <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              )}
-              <h3 className="text-xs font-bold text-zinc-200">
-                Estado para Pagos en Efectivo
-              </h3>
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-zinc-400">
-              {trustInfo ? (
-                trustInfo.cashAllowed ? (
-                  <>
-                    Habilitado ({trustInfo.completed} pedidos cumplidos). Tope
-                    en camino en efectivo:{" "}
-                    <strong className="text-zinc-200">
-                      {formatCurrency(trustInfo.maxCashRemote)}
-                    </strong>
-                    .
-                  </>
-                ) : (
-                  <span className="text-red-300">
-                    Por inasistencia previa en efectivo, tu cuenta solo permite
-                    pedidos por Transferencia Bancaria.
-                  </span>
-                )
-              ) : (
-                "Tu cédula y celular respaldan tus reservas en efectivo en el local."
-              )}
-            </p>
           </div>
 
-          {/* Future Saved Card */}
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-800/80 bg-[#141418] px-4 py-3 opacity-80">
-            <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-              <CreditCard className="h-4 w-4 text-[#FB7185]" />
-              <span>Tarjeta guardada en perfil</span>
+          {/* Minimalist Trust Badge */}
+          {trustInfo ? (
+            <div
+              className={`flex items-center gap-2.5 rounded-2xl border p-3.5 text-xs ${
+                trustInfo.cashAllowed
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                  : "border-red-500/35 bg-red-500/10 text-red-200"
+              }`}
+            >
+              {trustInfo.cashAllowed ? (
+                <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+              ) : (
+                <ShieldAlert className="h-4 w-4 shrink-0 text-red-400" />
+              )}
+              <span>
+                {trustInfo.cashAllowed
+                  ? `Pago en efectivo habilitado • ${trustInfo.completed} retiros cumplidos.`
+                  : "Efectivo restringido por inasistencia previa. Usa Transferencia."}
+              </span>
             </div>
-            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-400">
-              Próximamente
-            </span>
-          </div>
+          ) : null}
 
-          {/* Saved Orders History */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-300">
-              <History className="h-4 w-4 text-[#E11D48]" />
-              <span>Mis Pedidos</span>
+          {/* Recent Orders */}
+          <div>
+            <div className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-400">
+              <History className="h-3.5 w-3.5 text-[#FB7185]" />
+              <span>Mis Pedidos Recientes</span>
             </div>
 
             {savedOrders.length === 0 ? (
-              <div className="rounded-2xl border border-zinc-800 bg-[#141418] p-4 text-center text-xs text-zinc-500">
+              <div className="rounded-2xl border border-dashed border-zinc-800 p-4 text-center text-xs text-zinc-500">
                 Aún no tienes pedidos registrados.
               </div>
             ) : (
               <div className="space-y-2">
-                {savedOrders.map((ord) => (
+                {savedOrders.slice(0, 6).map((ord) => (
                   <button
                     key={ord.orderId}
+                    id={`open-recent-order-${ord.orderId}`}
                     type="button"
                     onClick={() => {
                       onClose();
                       onOpenOrderTracker(ord.orderId);
                     }}
-                    className="flex w-full items-center justify-between rounded-2xl border border-zinc-800 bg-[#141418] p-3 text-left transition-colors hover:border-[#E11D48]"
+                    className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-[#121215] px-3.5 py-2.5 text-left hover:border-[#E11D48]"
                   >
                     <div>
-                      <p className="text-xs font-black uppercase text-zinc-100">
-                        {ord.tenantName} • #
-                        {ord.orderId.slice(0, 6).toUpperCase()}
+                      <p className="text-xs font-black text-zinc-100">
+                        {ord.tenantName}
                       </p>
                       <p className="text-[11px] text-zinc-400">
-                        Ver estado en tiempo real
+                        #{ord.orderId.slice(0, 8).toUpperCase()} •{" "}
+                        {new Date(ord.createdAt).toLocaleDateString("es-EC", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                     </div>
-                    <span className="text-xs font-black text-[#FB7185]">
-                      {formatCurrency(ord.total)}
-                    </span>
+                    <div className="text-right">
+                      <p className="text-xs font-black text-zinc-100">
+                        {formatCurrency(ord.total)}
+                      </p>
+                      <span className="text-[10px] font-bold text-[#FB7185]">
+                        Ver estado →
+                      </span>
+                    </div>
                   </button>
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Sign Out Button */}
+          <div className="pt-2">
+            <button
+              id="customer-signout-btn"
+              type="button"
+              onClick={() => void handleSignOut()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-[#121215] px-4 py-2.5 text-xs font-bold text-zinc-300 hover:border-red-500/50 hover:text-red-300"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Cerrar Sesión</span>
+            </button>
           </div>
         </div>
       </div>

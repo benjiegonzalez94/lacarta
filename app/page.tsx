@@ -1,17 +1,37 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
+import { UnifiedAuthView } from "@/components/auth/UnifiedAuthView";
 import {
   HomeDinerHubClient,
   type DirectoryTenantItem,
 } from "@/components/menu/HomeDinerHubClient";
-import { createPublicServerClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { getScheduleStatus } from "@/lib/utils/schedule";
 
 async function HomeHubContent() {
   await connection();
-  const supabase = createPublicServerClient();
+  const supabase = await createClient();
 
-  const [{ data: tenantsData }, { data: hoursData }] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return <UnifiedAuthView />;
+  }
+
+  const [
+    { data: profileRow },
+    { data: ownedTenant },
+    { data: tenantsData },
+    { data: hoursData },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("tenants")
+      .select("id, slug")
+      .eq("owner_id", user.id)
+      .maybeSingle(),
     supabase
       .from("tenants")
       .select("*")
@@ -31,6 +51,10 @@ async function HomeHubContent() {
       slogan: t.slogan || "Arte en Sabor",
       phone: t.phone,
       address: t.address,
+      city: t.city || "Quito",
+      latitude: t.latitude !== null ? Number(t.latitude) : null,
+      longitude: t.longitude !== null ? Number(t.longitude) : null,
+      googleMapsUrl: t.google_maps_url,
       primaryColor: t.primary_color || "#E11D48",
       logoUrl: t.logo_url,
       isOpen: schedule.isOpen,
@@ -39,7 +63,33 @@ async function HomeHubContent() {
     };
   });
 
-  return <HomeDinerHubClient tenants={tenants} />;
+  const isSeller = Boolean(ownedTenant || profileRow?.role === "seller");
+
+  return (
+    <HomeDinerHubClient
+      tenants={tenants}
+      isSeller={isSeller}
+      serverProfile={
+        profileRow
+          ? {
+              name: profileRow.full_name || "",
+              cedula: profileRow.cedula || "",
+              phone: profileRow.phone || "",
+              avatarUrl: profileRow.avatar_url || "",
+              city: profileRow.city || "Quito",
+              latitude:
+                profileRow.latitude !== null
+                  ? Number(profileRow.latitude)
+                  : null,
+              longitude:
+                profileRow.longitude !== null
+                  ? Number(profileRow.longitude)
+                  : null,
+            }
+          : null
+      }
+    />
+  );
 }
 
 export default function HomePage() {

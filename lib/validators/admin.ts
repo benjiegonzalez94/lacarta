@@ -61,19 +61,38 @@ export const TenantSettingsSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(
-      /^\+[1-9][0-9]{7,14}$/,
-      "El teléfono debe estar en formato internacional E.164 (ej. +593986482003)."
-    ),
+    .min(7, "Ingresa un número de teléfono válido.")
+    .max(25, "Número de teléfono demasiado largo."),
   deliveryFee: z.coerce
     .number()
     .min(0, "El costo de envío no puede ser negativo.")
     .max(100, "Costo de envío fuera de rango."),
+  city: z
+    .string()
+    .trim()
+    .min(2, "Ingresa la ciudad del local.")
+    .max(80)
+    .default("Quito"),
   address: z
     .string()
     .trim()
     .max(300, "Máximo 300 caracteres.")
     .optional()
+    .transform((v) => (v && v.length > 0 ? v : null)),
+  latitude: z
+    .union([z.coerce.number().min(-90).max(90), z.literal(""), z.null()])
+    .optional()
+    .transform((v) => (typeof v === "number" && Number.isFinite(v) ? v : null)),
+  longitude: z
+    .union([z.coerce.number().min(-180).max(180), z.literal(""), z.null()])
+    .optional()
+    .transform((v) => (typeof v === "number" && Number.isFinite(v) ? v : null)),
+  googleMapsUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .or(z.literal(""))
     .transform((v) => (v && v.length > 0 ? v : null)),
   bankDetails: z
     .string()
@@ -90,7 +109,7 @@ export const TenantSettingsSchema = z.object({
     .string()
     .trim()
     .regex(/^#[0-9A-Fa-f]{6}$/, "Color secundario hex inválido.")
-    .default("#D34E27"),
+    .default("#BE123C"),
   logoUrl: z
     .string()
     .trim()

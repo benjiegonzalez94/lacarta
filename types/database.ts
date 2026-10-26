@@ -408,6 +408,48 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          cedula: string | null
+          city: string
+          created_at: string
+          full_name: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          phone: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          cedula?: string | null
+          city?: string
+          created_at?: string
+          full_name?: string
+          id: string
+          latitude?: number | null
+          longitude?: number | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          cedula?: string | null
+          city?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tables: {
         Row: {
           created_at: string
@@ -445,10 +487,15 @@ export type Database = {
           address: string | null
           bank_details: string | null
           banner_url: string | null
+          city: string
           created_at: string
           delivery_fee: number
+          google_maps_url: string | null
           id: string
+          latitude: number | null
           logo_url: string | null
+          longitude: number | null
+          monthly_fee: number
           name: string
           owner_id: string | null
           phone: string
@@ -456,15 +503,23 @@ export type Database = {
           secondary_color: string
           slogan: string
           slug: string
+          subscription_ends_at: string
+          subscription_plan: string
+          subscription_status: string
         }
         Insert: {
           address?: string | null
           bank_details?: string | null
           banner_url?: string | null
+          city?: string
           created_at?: string
           delivery_fee?: number
+          google_maps_url?: string | null
           id?: string
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
+          monthly_fee?: number
           name: string
           owner_id?: string | null
           phone: string
@@ -472,15 +527,23 @@ export type Database = {
           secondary_color?: string
           slogan?: string
           slug: string
+          subscription_ends_at?: string
+          subscription_plan?: string
+          subscription_status?: string
         }
         Update: {
           address?: string | null
           bank_details?: string | null
           banner_url?: string | null
+          city?: string
           created_at?: string
           delivery_fee?: number
+          google_maps_url?: string | null
           id?: string
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
+          monthly_fee?: number
           name?: string
           owner_id?: string | null
           phone?: string
@@ -488,6 +551,9 @@ export type Database = {
           secondary_color?: string
           slogan?: string
           slug?: string
+          subscription_ends_at?: string
+          subscription_plan?: string
+          subscription_status?: string
         }
         Relationships: []
       }
