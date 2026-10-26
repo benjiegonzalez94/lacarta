@@ -33,22 +33,11 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refresh the auth session cookie if present.
+  // Route protection and the inline login view are handled by app/(dashboard)/admin/layout.tsx.
+  await supabase.auth.getUser();
 
-  const isLoginPath = request.nextUrl.pathname.startsWith("/admin/login");
-  const isProtectedAdminPath =
-    request.nextUrl.pathname.startsWith("/admin") && !isLoginPath;
-
-  if (!user && isProtectedAdminPath) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/admin/login";
-    loginUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  if (user && isLoginPath) {
+  if (request.nextUrl.pathname.startsWith("/admin/login")) {
     const adminUrl = request.nextUrl.clone();
     adminUrl.pathname = "/admin";
     adminUrl.searchParams.delete("redirectTo");

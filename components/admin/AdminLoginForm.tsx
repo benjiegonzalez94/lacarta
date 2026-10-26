@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Flame, Loader2, Lock } from "lucide-react";
+import { ArrowLeft, Flame, Loader2, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export function AdminLoginForm() {
@@ -59,6 +60,17 @@ export function AdminLoginForm() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0F0F11] px-4 py-12">
       <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-[#18181B] p-6 shadow-2xl sm:p-8">
+        <div className="mb-4">
+          <Link
+            id="admin-login-back-home-link"
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-[#E5A93C]"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Volver al inicio</span>
+          </Link>
+        </div>
+
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#E5A93C]/40 bg-[#E5A93C]/10 text-[#E5A93C]">
             <Flame className="h-7 w-7" />
@@ -119,7 +131,7 @@ export function AdminLoginForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="dueno@cowiings.com"
+              placeholder="admin@cowiings.com"
               className="w-full rounded-xl border border-zinc-800 bg-[#202024] px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-[#E5A93C] focus:outline-none"
             />
           </div>
