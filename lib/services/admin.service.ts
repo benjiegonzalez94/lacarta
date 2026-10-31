@@ -32,13 +32,46 @@ export async function getTenantForOwner(
   supabase: SupabaseClient<Database>,
   userId: string
 ): Promise<TenantRow | null> {
-  const { data } = await supabase
+  const { data: ownedTenant } = await supabase
     .from("tenants")
     .select("*")
     .eq("owner_id", userId)
     .maybeSingle();
 
-  return data ?? null;
+  if (ownedTenant) {
+    return ownedTenant;
+  }
+
+  // If user is platform superadmin, allow inspecting primary tenant
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profile?.role === "admin") {
+    const { data: primaryTenant } = await supabase
+      .from("tenants")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    return primaryTenant ?? null;
+  }
+
+  return null;
+}
+
+export async function getAllTenants(
+  supabase: SupabaseClient<Database>
+): Promise<TenantRow[]> {
+  const { data } = await supabase
+    .from("tenants")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  return data ?? [];
 }
 
 export async function getAdminDashboardData(

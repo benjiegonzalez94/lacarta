@@ -689,6 +689,7 @@ export type Database = {
           total: number
         }[]
       }
+      is_admin: { Args: { p_user_id?: string }; Returns: boolean }
       is_tenant_owner: { Args: { p_tenant_id: string }; Returns: boolean }
       list_public_tables: {
         Args: { p_slug: string }

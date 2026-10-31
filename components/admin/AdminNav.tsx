@@ -11,6 +11,8 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  ShieldCheck,
+  Store,
   User,
 } from "lucide-react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
@@ -20,6 +22,8 @@ import type { TenantRow } from "@/types/domain";
 export interface AdminNavProps {
   tenant: TenantRow;
   userEmail: string;
+  isSuperAdmin?: boolean;
+  allTenants?: TenantRow[];
 }
 
 const NAV_ITEMS = [
@@ -29,7 +33,12 @@ const NAV_ITEMS = [
   { href: "/admin/configuracion", label: "Mi Perfil", icon: User },
 ];
 
-export function AdminNav({ tenant, userEmail }: AdminNavProps) {
+export function AdminNav({
+  tenant,
+  userEmail,
+  isSuperAdmin = false,
+  allTenants = [],
+}: AdminNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [copiedMenuLink, setCopiedMenuLink] = useState(false);
@@ -57,6 +66,32 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
 
   return (
     <header className="border-b border-zinc-800 bg-[#141417] pt-8 sm:pt-0">
+      {/* Superadmin Platform Banner */}
+      {isSuperAdmin ? (
+        <div className="border-b border-violet-500/30 bg-violet-950/40 px-4 py-2">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 rounded-full bg-violet-500/20 px-2.5 py-0.5 text-[11px] font-black tracking-wider text-violet-300">
+                <ShieldCheck className="h-3.5 w-3.5 text-violet-400" />
+                SUPERADMIN / EQUIPO DEV
+              </span>
+              <span className="hidden text-zinc-400 sm:inline">
+                Control Global de Plataforma ({allTenants.length} {allTenants.length === 1 ? "Restaurante" : "Restaurantes"})
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1 rounded-lg border border-violet-500/40 bg-violet-900/30 px-2.5 py-1 text-[11px] font-bold text-violet-200 hover:bg-violet-900/50"
+              >
+                <Store className="h-3 w-3" />
+                <span>Vista Clientes / Hub</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -77,7 +112,12 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
                 <span className="truncate text-base font-black uppercase tracking-tight text-zinc-50">
                   {tenant.name}
                 </span>
-                <span className="rounded-md bg-zinc-800 px-2 py-0.5 font-mono text-[11px] text-zinc-300">
+                {tenant.branch_name ? (
+                  <span className="rounded-md border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-300">
+                    {tenant.branch_name}
+                  </span>
+                ) : null}
+                <span className="rounded-md bg-zinc-800/80 px-2 py-0.5 font-mono text-[11px] text-zinc-400">
                   /{tenant.slug}
                 </span>
               </div>
@@ -128,7 +168,7 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
             id="admin-signout-btn"
             type="button"
             onClick={handleSignOut}
-            className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 bg-[#18181B] px-3 py-2 text-xs font-semibold text-zinc-300 hover:bg-red-500/15 hover:text-red-300 sm:inline-flex"
+            className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 bg-[#18181B] px-3 py-2 text-xs font-semibold text-zinc-300 transition-colors hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300 sm:inline-flex"
           >
             <LogOut className="h-3.5 w-3.5" />
             <span>Salir</span>
@@ -136,31 +176,26 @@ export function AdminNav({ tenant, userEmail }: AdminNavProps) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 pb-3">
-        <nav
-          aria-label="Secciones del panel de administración"
-          className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center sm:gap-2"
-        >
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-colors sm:justify-start sm:px-3.5 ${
-                  isActive
-                    ? "bg-[#E11D48] text-white shadow-sm shadow-[#E11D48]/30"
-                    : "border border-zinc-800/80 bg-[#18181B] text-zinc-300 hover:bg-zinc-800/70 hover:text-zinc-100"
-                }`}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+      <nav className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-4 pb-2 text-xs font-bold text-zinc-400">
+        {NAV_ITEMS.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 transition-colors ${
+                isActive
+                  ? "bg-[#E11D48] text-white"
+                  : "hover:bg-zinc-800/60 hover:text-zinc-200"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 }

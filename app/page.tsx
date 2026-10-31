@@ -65,11 +65,13 @@ async function HomeHubContent() {
   });
 
   const isSeller = Boolean(ownedTenant || profileRow?.role === "seller");
+  const isSuperAdmin = profileRow?.role === "admin";
 
   return (
     <HomeDinerHubClient
       tenants={tenants}
       isSeller={isSeller}
+      isSuperAdmin={isSuperAdmin}
       serverProfile={
         profileRow
           ? {

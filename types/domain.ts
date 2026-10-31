@@ -13,6 +13,8 @@ export type ProductModifierGroupRow = Tables<"product_modifier_groups">;
 export type ProfileRow = Tables<"profiles">;
 export type CustomerCardRow = Tables<"customer_cards">;
 
+export type UserRole = "customer" | "seller" | "admin";
+
 export type OrderType = "delivery" | "pickup" | "dine_in";
 
 export type ArrivalMode = "on_the_way" | "at_table";

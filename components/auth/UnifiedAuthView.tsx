@@ -90,7 +90,7 @@ export function UnifiedAuthView({
       });
     }
 
-    if (resolved.role === "seller" || forceSellerRedirect) {
+    if (resolved.role === "seller" || resolved.role === "admin" || forceSellerRedirect) {
       router.push("/admin");
       router.refresh();
     } else {

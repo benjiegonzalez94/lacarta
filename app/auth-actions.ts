@@ -8,24 +8,13 @@ import {
 } from "@/lib/supabase/server";
 import { ECUADOR_CITIES } from "@/lib/utils/location";
 
-const RegisterAccountSchema = z.object({
-  accountType: z.enum(["customer", "seller"]),
-  email: z.string().trim().email("Correo electrónico inválido"),
-  password: z
-    .string()
-    .min(6, "La contraseña debe tener al menos 6 caracteres"),
-  fullName: z.string().trim().min(2, "Ingresa tu nombre completo"),
-  cedula: z.string().trim().max(20).optional(),
-  phone: z.string().trim().min(7, "Ingresa un número de teléfono válido"),
-  city: z.string().trim().min(2).default("Quito"),
-  latitude: z.number().min(-90).max(90).nullable().optional(),
-  longitude: z.number().min(-180).max(180).nullable().optional(),
-  restaurantName: z.string().trim().optional(),
-  branchName: z.string().trim().optional(),
-  restaurantAddress: z.string().trim().optional(),
-});
+import {
+  RegisterAccountSchema,
+  type RegisterAccountInput,
+} from "@/lib/validators/auth";
+import type { UserRole } from "@/types/domain";
 
-export type RegisterAccountInput = z.infer<typeof RegisterAccountSchema>;
+export type { RegisterAccountInput };
 
 function slugifyRestaurantName(name: string): string {
   const base = name
@@ -173,7 +162,7 @@ export async function registerAccountAction(
 }
 
 export async function resolveSignedInRoleAction(): Promise<{
-  role: "customer" | "seller";
+  role: UserRole;
   profile: {
     fullName: string;
     cedula: string;
@@ -202,8 +191,12 @@ export async function resolveSignedInRoleAction(): Promise<{
       .maybeSingle(),
   ]);
 
-  const role: "customer" | "seller" =
-    ownedTenant || profileRow?.role === "seller" ? "seller" : "customer";
+  const role: UserRole =
+    profileRow?.role === "admin"
+      ? "admin"
+      : ownedTenant || profileRow?.role === "seller"
+        ? "seller"
+        : "customer";
 
   return {
     role,

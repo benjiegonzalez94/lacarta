@@ -10,6 +10,7 @@ import {
   MapPin,
   Navigation,
   Search,
+  ShieldCheck,
   Store,
   User,
 } from "lucide-react";
@@ -51,6 +52,7 @@ export interface DirectoryTenantItem {
 export interface HomeDinerHubClientProps {
   tenants: DirectoryTenantItem[];
   isSeller?: boolean;
+  isSuperAdmin?: boolean;
   serverProfile?: {
     name: string;
     cedula: string;
@@ -65,6 +67,7 @@ export interface HomeDinerHubClientProps {
 export function HomeDinerHubClient({
   tenants,
   isSeller = false,
+  isSuperAdmin = false,
   serverProfile = null,
 }: HomeDinerHubClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -204,14 +207,25 @@ export function HomeDinerHubClient({
               </span>
             </button>
 
-            <Link
-              id="home-seller-portal-link"
-              href="/admin"
-              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-[#18181B] px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:border-[#E11D48] hover:text-zinc-100"
-            >
-              <Store className="h-3.5 w-3.5 text-[#E11D48]" />
-              <span>{isSeller ? "Mi Local" : "Vendedor"}</span>
-            </Link>
+            {isSuperAdmin ? (
+              <Link
+                id="home-superadmin-portal-link"
+                href="/admin"
+                className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/40 bg-violet-950/40 px-3 py-1.5 text-xs font-bold text-violet-300 transition-colors hover:border-violet-400 hover:text-white"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-violet-400" />
+                <span>Panel Dev</span>
+              </Link>
+            ) : isSeller ? (
+              <Link
+                id="home-seller-portal-link"
+                href="/admin"
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-[#18181B] px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:border-[#E11D48] hover:text-zinc-100"
+              >
+                <Store className="h-3.5 w-3.5 text-[#E11D48]" />
+                <span>Mi Local</span>
+              </Link>
+            ) : null}
           </div>
         </div>
       </header>

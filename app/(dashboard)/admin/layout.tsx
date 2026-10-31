@@ -1,9 +1,11 @@
 import { Suspense, type ReactNode } from "react";
-import { claimPilotTenantAction } from "@/app/(dashboard)/admin/actions";
+import Link from "next/link";
+import { ShieldAlert } from "lucide-react";
 import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
 import { AdminNav } from "@/components/admin/AdminNav";
-import { getTenantForOwner } from "@/lib/services/admin.service";
+import { getAllTenants, getTenantForOwner } from "@/lib/services/admin.service";
 import { createClient } from "@/lib/supabase/server";
+import type { TenantRow } from "@/types/domain";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -19,34 +21,86 @@ async function AdminGuard({ children }: AdminLayoutProps) {
     return <AdminLoginForm />;
   }
 
-  const tenant = await getTenantForOwner(supabase, user.id);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, full_name")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  if (!tenant) {
-    async function handleClaim() {
+  // 1. Role Security Check: Customers are strictly forbidden from accessing /admin
+  if (profile?.role === "customer") {
+    async function handleSignOut() {
       "use server";
-      await claimPilotTenantAction();
+      const client = await createClient();
+      await client.auth.signOut();
     }
 
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0F0F11] px-4">
-        <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-[#18181B] p-6 text-center shadow-xl">
-          <h1 className="text-lg font-black text-zinc-50">
-            Vincular Restaurante a tu Cuenta
+        <div className="w-full max-w-md rounded-3xl border border-red-500/30 bg-[#18181B] p-6 text-center shadow-xl">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/15 text-red-400">
+            <ShieldAlert className="h-6 w-6" />
+          </div>
+          <h1 className="mt-4 text-lg font-black text-zinc-50">
+            Acceso Restringido
           </h1>
           <p className="mt-2 text-xs text-zinc-400">
-            Has iniciado sesión como{" "}
-            <strong className="text-zinc-200">{user.email}</strong>, pero aún no
-            tienes un restaurante asignado como propietario (`owner_id`).
+            Tu cuenta está registrada como <strong className="text-zinc-200">Cliente</strong> ({user.email}).
+            El panel administrativo está reservado para propietarios de locales y el equipo de administración de LaCarta.
           </p>
-          <form action={handleClaim} className="mt-5">
-            <button
-              id="claim-pilot-tenant-btn"
-              type="submit"
-              className="w-full rounded-xl bg-[#E11D48] px-4 py-3 text-xs font-black text-white hover:bg-[#BE123C]"
+          <div className="mt-6 flex flex-col gap-2">
+            <Link
+              href="/"
+              className="rounded-xl bg-[#E11D48] px-4 py-2.5 text-xs font-black text-white hover:bg-[#BE123C]"
             >
-              Vincular restaurante piloto (Cowiings) a mi cuenta
-            </button>
-          </form>
+              Ir al Menú y Restaurantes
+            </Link>
+            <form action={handleSignOut}>
+              <button
+                type="submit"
+                className="w-full rounded-xl border border-zinc-800 bg-[#121215] px-4 py-2.5 text-xs font-bold text-zinc-400 hover:text-white"
+              >
+                Cerrar Sesión
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Platform Superadmin Check
+  const isSuperAdmin = profile?.role === "admin";
+  let tenant: TenantRow | null = null;
+  let allTenants: TenantRow[] = [];
+
+  if (isSuperAdmin) {
+    allTenants = await getAllTenants(supabase);
+    tenant = allTenants[0] ?? null;
+  } else {
+    tenant = await getTenantForOwner(supabase, user.id);
+  }
+
+  // 3. Seller has no tenant registered yet
+  if (!tenant) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0F0F11] px-4">
+        <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-[#18181B] p-6 text-center shadow-xl">
+          <h1 className="text-lg font-black text-zinc-50">
+            Restaurante no configurado
+          </h1>
+          <p className="mt-2 text-xs text-zinc-400">
+            Has iniciado sesión con tu cuenta de vendedor (
+            <strong className="text-zinc-200">{user.email}</strong>), pero aún no has registrado los datos de tu local.
+          </p>
+          <div className="mt-5">
+            <Link
+              href="/"
+              className="inline-block w-full rounded-xl bg-[#E11D48] px-4 py-3 text-xs font-black text-white hover:bg-[#BE123C]"
+            >
+              Completar Registro en LaCarta
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -54,7 +108,12 @@ async function AdminGuard({ children }: AdminLayoutProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0F0F11] text-zinc-50">
-      <AdminNav tenant={tenant} userEmail={user.email ?? ""} />
+      <AdminNav
+        tenant={tenant}
+        userEmail={user.email ?? ""}
+        isSuperAdmin={isSuperAdmin}
+        allTenants={allTenants}
+      />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         {children}
       </main>
