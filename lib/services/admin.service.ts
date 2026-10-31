@@ -30,26 +30,30 @@ export interface AdminTenantDashboardData {
 
 export async function getTenantForOwner(
   supabase: SupabaseClient<Database>,
-  userId: string
+  userId: string,
+  preferredTenantId?: string | null
 ): Promise<TenantRow | null> {
-  const { data: ownedTenant } = await supabase
-    .from("tenants")
-    .select("*")
-    .eq("owner_id", userId)
-    .maybeSingle();
-
-  if (ownedTenant) {
-    return ownedTenant;
-  }
-
-  // If user is platform superadmin, allow inspecting primary tenant
+  // Check user role first
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", userId)
     .maybeSingle();
 
+  // If user is platform superadmin, allow inspecting any preferred tenant or primary
   if (profile?.role === "admin") {
+    if (preferredTenantId) {
+      const { data: chosenTenant } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("id", preferredTenantId)
+        .maybeSingle();
+
+      if (chosenTenant) {
+        return chosenTenant;
+      }
+    }
+
     const { data: primaryTenant } = await supabase
       .from("tenants")
       .select("*")
@@ -58,6 +62,17 @@ export async function getTenantForOwner(
       .maybeSingle();
 
     return primaryTenant ?? null;
+  }
+
+  // Regular seller: check owned tenant
+  const { data: ownedTenant } = await supabase
+    .from("tenants")
+    .select("*")
+    .eq("owner_id", userId)
+    .maybeSingle();
+
+  if (ownedTenant) {
+    return ownedTenant;
   }
 
   return null;

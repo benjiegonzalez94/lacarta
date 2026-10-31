@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { CreditCard, Sparkles } from "lucide-react";
 import { SellerSettingsForm } from "@/components/admin/SellerSettingsForm";
 import { getTenantForOwner } from "@/lib/services/admin.service";
@@ -15,7 +16,9 @@ export default async function AdminSettingsPage() {
     redirect("/admin");
   }
 
-  const tenant = await getTenantForOwner(supabase, user.id);
+  const cookieStore = await cookies();
+  const activeTenantId = cookieStore.get("active_admin_tenant_id")?.value;
+  const tenant = await getTenantForOwner(supabase, user.id, activeTenantId);
   if (!tenant) {
     redirect("/admin");
   }

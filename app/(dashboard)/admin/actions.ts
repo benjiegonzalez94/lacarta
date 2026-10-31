@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import {
   createClient,
   createServiceRoleClient,
@@ -38,6 +39,40 @@ async function requireOwnedTenant(): Promise<{
 
   if (!user) {
     throw new Error("No autorizado. Inicia sesión primero.");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.role === "admin") {
+    const cookieStore = await cookies();
+    const activeTenantId = cookieStore.get("active_admin_tenant_id")?.value;
+
+    if (activeTenantId) {
+      const { data: chosenTenant } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("id", activeTenantId)
+        .maybeSingle();
+
+      if (chosenTenant) {
+        return { supabase, tenant: chosenTenant };
+      }
+    }
+
+    const { data: fallbackTenant } = await supabase
+      .from("tenants")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (fallbackTenant) {
+      return { supabase, tenant: fallbackTenant };
+    }
   }
 
   const { data: tenant } = await supabase

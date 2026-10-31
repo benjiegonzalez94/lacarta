@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -9,12 +9,14 @@ import {
   Copy,
   ExternalLink,
   LayoutDashboard,
+  LayoutGrid,
   LogOut,
   Package,
   ShieldCheck,
   Store,
   User,
 } from "lucide-react";
+import { switchActiveTenantAction } from "@/app/(dashboard)/admin/sistema/actions";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 import type { TenantRow } from "@/types/domain";
@@ -42,6 +44,7 @@ export function AdminNav({
   const pathname = usePathname();
   const router = useRouter();
   const [copiedMenuLink, setCopiedMenuLink] = useState(false);
+  const [isSwitching, startTransition] = useTransition();
 
   const navItems = isSuperAdmin
     ? [
@@ -76,28 +79,64 @@ export function AdminNav({
     router.refresh();
   }
 
+  function handleTenantChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const newTenantId = e.target.value;
+    if (!newTenantId || newTenantId === tenant.id) return;
+
+    startTransition(async () => {
+      await switchActiveTenantAction(newTenantId);
+      router.refresh();
+    });
+  }
+
   return (
     <header className="border-b border-zinc-800 bg-[#141417] pt-8 sm:pt-0">
-      {/* Superadmin Platform Banner */}
+      {/* Superadmin Multi-Tenant Banner */}
       {isSuperAdmin ? (
         <div className="border-b border-violet-500/30 bg-violet-950/40 px-4 py-2">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-1 rounded-full bg-violet-500/20 px-2.5 py-0.5 text-[11px] font-black tracking-wider text-violet-300">
                 <ShieldCheck className="h-3.5 w-3.5 text-violet-400" />
-                SUPERADMIN / EQUIPO DEV
+                SUPERADMIN DEV
               </span>
-              <span className="hidden text-zinc-400 sm:inline">
-                Control Global de Plataforma ({allTenants.length}{" "}
-                {allTenants.length === 1 ? "Restaurante" : "Restaurantes"})
+
+              {allTenants.length > 0 ? (
+                <div className="flex items-center gap-1.5 rounded-xl border border-violet-500/40 bg-[#121215] px-2.5 py-1">
+                  <span className="text-[11px] font-bold text-zinc-400">
+                    Gestionando negocio:
+                  </span>
+                  <select
+                    id="admin-tenant-switcher-select"
+                    value={tenant.id}
+                    disabled={isSwitching}
+                    onChange={handleTenantChange}
+                    className="cursor-pointer bg-transparent text-[11px] font-black text-violet-200 focus:outline-none"
+                  >
+                    {allTenants.map((t) => (
+                      <option
+                        key={t.id}
+                        value={t.id}
+                        className="bg-[#18181B] text-zinc-100"
+                      >
+                        {t.name} ({t.branch_name || t.city})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
+              <span className="hidden text-[11px] text-zinc-400 md:inline">
+                ({allTenants.length} negocios en la plataforma)
               </span>
             </div>
+
             <div className="flex items-center gap-2">
               <Link
                 href="/admin/sistema"
                 className="inline-flex items-center gap-1 rounded-lg border border-violet-500/40 bg-violet-600 px-2.5 py-1 text-[11px] font-black text-white hover:bg-violet-500"
               >
-                <ShieldCheck className="h-3 w-3" />
+                <LayoutGrid className="h-3 w-3" />
                 <span>Panel Superadmin</span>
               </Link>
               <Link
@@ -105,7 +144,7 @@ export function AdminNav({
                 className="inline-flex items-center gap-1 rounded-lg border border-violet-500/40 bg-violet-900/30 px-2.5 py-1 text-[11px] font-bold text-violet-200 hover:bg-violet-900/50"
               >
                 <Store className="h-3 w-3" />
-                <span>Hub Clientes</span>
+                <span className="hidden sm:inline">Hub Clientes</span>
               </Link>
             </div>
           </div>
@@ -140,6 +179,11 @@ export function AdminNav({
                 <span className="rounded-md bg-zinc-800/80 px-2 py-0.5 font-mono text-[11px] text-zinc-400">
                   /{tenant.slug}
                 </span>
+                {isSuperAdmin && (
+                  <span className="rounded-md border border-violet-500/30 bg-violet-950/40 px-2 py-0.5 text-[10px] font-black text-violet-300">
+                    Negocio Activo
+                  </span>
+                )}
               </div>
               <p className="truncate text-xs text-zinc-400">{userEmail}</p>
             </div>

@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
@@ -69,14 +70,22 @@ async function AdminGuard({ children }: AdminLayoutProps) {
     );
   }
 
-  // 2. Platform Superadmin Check
+  // 2. Platform Superadmin Check & Multi-Tenant Resolution
   const isSuperAdmin = profile?.role === "admin";
   let tenant: TenantRow | null = null;
   let allTenants: TenantRow[] = [];
 
+  const cookieStore = await cookies();
+  const activeTenantId = cookieStore.get("active_admin_tenant_id")?.value;
+
   if (isSuperAdmin) {
     allTenants = await getAllTenants(supabase);
-    tenant = allTenants[0] ?? null;
+    tenant =
+      (activeTenantId
+        ? allTenants.find((t) => t.id === activeTenantId)
+        : null) ??
+      allTenants[0] ??
+      null;
   } else {
     tenant = await getTenantForOwner(supabase, user.id);
   }

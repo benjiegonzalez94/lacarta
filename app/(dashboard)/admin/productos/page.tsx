@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { Plus, Trash2, Upload } from "lucide-react";
 import {
   createCategoryAction,
@@ -21,7 +22,9 @@ async function AdminProductsContent() {
   } = await supabase.auth.getUser();
 
   if (!user) return null;
-  const tenant = await getTenantForOwner(supabase, user.id);
+  const cookieStore = await cookies();
+  const activeTenantId = cookieStore.get("active_admin_tenant_id")?.value;
+  const tenant = await getTenantForOwner(supabase, user.id, activeTenantId);
   if (!tenant) return null;
 
   const data = await getAdminDashboardData(supabase, tenant);

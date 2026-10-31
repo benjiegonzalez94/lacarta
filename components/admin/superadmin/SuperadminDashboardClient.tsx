@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   AlertCircle,
+  ArrowRight,
   Calendar,
   Check,
   CheckCircle2,
@@ -13,6 +15,7 @@ import {
   Eye,
   Landmark,
   Phone,
+  Plus,
   Power,
   RotateCcw,
   Search,
@@ -26,10 +29,12 @@ import {
 } from "lucide-react";
 import {
   extendTenantSubscriptionAction,
+  superadminCreateTenantAction,
   superadminPardonCustomerNoShowsAction,
   superadminQuickUpdateTenantAction,
   superadminSearchCustomerAction,
   superadminUpdateOrderStatusAction,
+  switchActiveTenantAction,
   toggleTenantSubscriptionAction,
 } from "@/app/(dashboard)/admin/sistema/actions";
 import type { SuperadminInitialData } from "@/lib/services/superadmin.service";
@@ -68,6 +73,7 @@ export function SuperadminDashboardClient({
 }: {
   initialData: SuperadminInitialData;
 }) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     "kpis" | "tenants" | "users" | "support"
   >("kpis");
@@ -86,6 +92,17 @@ export function SuperadminDashboardClient({
   const [profileSearch, setProfileSearch] = useState("");
   const [profileRoleFilter, setProfileRoleFilter] = useState<string>("all");
   const [orderSearch, setOrderSearch] = useState("");
+
+  // Create new tenant modal
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTenantForm, setNewTenantForm] = useState({
+    name: "",
+    branch_name: "",
+    slug: "",
+    city: "Manta",
+    phone: "",
+    address: "",
+  });
 
   // Customer support lookup
   const [custSearchTerm, setCustSearchTerm] = useState("");
@@ -112,6 +129,55 @@ export function SuperadminDashboardClient({
     setTimeout(() => {
       setNotification((curr) => (curr?.text === text ? null : curr));
     }, 4500);
+  }
+
+  // Action: Switch Active Tenant and enter its panel
+  function handleEnterTenant(tenantId: string) {
+    startTransition(async () => {
+      try {
+        await switchActiveTenantAction(tenantId);
+        router.push("/admin");
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Error al entrar al local";
+        showToast("error", message);
+      }
+    });
+  }
+
+  // Action: Create New Tenant
+  function handleCreateTenant(e: React.FormEvent) {
+    e.preventDefault();
+    startTransition(async () => {
+      try {
+        const res = await superadminCreateTenantAction(newTenantForm);
+        setTenants((prev) => [
+          {
+            ...res.tenant,
+            ownerName: null,
+            ownerPhone: null,
+          },
+          ...prev,
+        ]);
+        setShowCreateModal(false);
+        setNewTenantForm({
+          name: "",
+          branch_name: "",
+          slug: "",
+          city: "Manta",
+          phone: "",
+          address: "",
+        });
+        showToast(
+          "success",
+          `Restaurante "${res.tenant.name}" registrado con éxito.`
+        );
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Error al registrar negocio";
+        showToast("error", message);
+      }
+    });
   }
 
   // Action: Toggle Subscription
@@ -346,15 +412,15 @@ export function SuperadminDashboardClient({
               PANEL SUPERADMINISTRADOR & DEV
             </span>
             <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-[11px] font-bold text-zinc-400">
-              LaCarta SaaS v2.4
+              LaCarta Multi-Tenant Platform
             </span>
           </div>
           <h1 className="mt-2 text-2xl font-black text-zinc-50">
-            Control Global del Sistema y Soporte
+            Control Global de Negocios y Soporte
           </h1>
           <p className="text-xs text-zinc-400">
-            Supervisa métricas de la plataforma, activa o suspende suscripciones
-            de restaurantes y resuelve solicitudes de clientes en tiempo real.
+            Supervisa todos los restaurantes, entra a administrar cualquiera
+            de ellos, activa/pausa suscripciones o registra nuevas franquicias.
           </p>
         </div>
 
@@ -382,7 +448,7 @@ export function SuperadminDashboardClient({
             }`}
           >
             <Store className="h-3.5 w-3.5" />
-            <span>Locales ({tenants.length})</span>
+            <span>Negocios ({tenants.length})</span>
           </button>
           <button
             type="button"
@@ -417,7 +483,7 @@ export function SuperadminDashboardClient({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-3xl border border-zinc-800 bg-[#18181B] p-5 shadow-sm">
               <div className="flex items-center justify-between text-zinc-400">
-                <span className="text-xs font-bold">Locales Activos</span>
+                <span className="text-xs font-bold">Negocios Activos</span>
                 <Store className="h-4 w-4 text-emerald-400" />
               </div>
               <p className="mt-2 text-3xl font-black text-emerald-400">
@@ -610,8 +676,18 @@ export function SuperadminDashboardClient({
                 className="w-full rounded-xl border border-zinc-800 bg-[#121215] py-2 pl-10 pr-4 text-xs text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none"
               />
             </div>
-            <div className="flex items-center gap-2 text-xs font-bold text-zinc-400">
-              <span>{filteredTenants.length} locales encontrados</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-1.5 rounded-xl bg-[#E11D48] px-3.5 py-2 text-xs font-black text-white shadow-sm shadow-[#E11D48]/30 hover:bg-[#BE123C]"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>+ Registrar Nuevo Negocio</span>
+              </button>
+              <span className="text-xs font-bold text-zinc-400">
+                {filteredTenants.length} negocios
+              </span>
             </div>
           </div>
 
@@ -765,13 +841,27 @@ export function SuperadminDashboardClient({
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="mt-5 flex items-center gap-2 pt-2 border-t border-zinc-800/60">
+                  {/* Enter Tenant Management Button */}
+                  <div className="mt-4 pt-3 border-t border-zinc-800/80">
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleEnterTenant(t.id)}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-violet-950/50 transition-all hover:bg-violet-500"
+                    >
+                      <Store className="h-4 w-4" />
+                      <span>Entrar a Gestionar Este Local</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Subscription Control Buttons */}
+                  <div className="mt-2.5 flex items-center gap-2">
                     <button
                       type="button"
                       disabled={isPending}
                       onClick={() => handleToggleSubscription(t)}
-                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-black transition-all ${
+                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black transition-all ${
                         isActive
                           ? "border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20"
                           : "bg-emerald-600 text-white hover:bg-emerald-500"
@@ -779,7 +869,7 @@ export function SuperadminDashboardClient({
                     >
                       <Power className="h-3.5 w-3.5" />
                       <span>
-                        {isActive ? "Pausar / Desactivar" : "Activar Suscripción"}
+                        {isActive ? "Pausar Suscripción" : "Activar"}
                       </span>
                     </button>
 
@@ -787,7 +877,7 @@ export function SuperadminDashboardClient({
                       type="button"
                       disabled={isPending}
                       onClick={() => handleExtendSubscription(t.id)}
-                      className="flex items-center gap-1.5 rounded-xl border border-violet-500/40 bg-violet-950/40 px-3 py-2.5 text-xs font-black text-violet-200 hover:bg-violet-900/60"
+                      className="flex items-center gap-1.5 rounded-xl border border-violet-500/40 bg-violet-950/40 px-3 py-2 text-xs font-black text-violet-200 hover:bg-violet-900/60"
                       title="Extender fecha de suscripción por +30 días"
                     >
                       <Calendar className="h-3.5 w-3.5 text-violet-400" />
@@ -797,6 +887,155 @@ export function SuperadminDashboardClient({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* CREATE NEW TENANT MODAL */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-3xl border border-zinc-800 bg-[#18181B] p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+              <div className="flex items-center gap-2">
+                <Store className="h-5 w-5 text-violet-400" />
+                <h3 className="text-sm font-black text-zinc-50">
+                  Registrar Nuevo Negocio en LaCarta
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="rounded-full bg-zinc-800 p-1 text-zinc-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTenant} className="mt-4 space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400">
+                  Nombre del Negocio *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Sushi Express"
+                  value={newTenantForm.name}
+                  onChange={(e) =>
+                    setNewTenantForm({ ...newTenantForm, name: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-[#121215] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] font-bold text-zinc-400">
+                    Sucursal
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Sucursal Centro"
+                    value={newTenantForm.branch_name}
+                    onChange={(e) =>
+                      setNewTenantForm({
+                        ...newTenantForm,
+                        branch_name: e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-[#121215] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-zinc-400">
+                    Slug URL (sin espacios) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="sushiexpress"
+                    value={newTenantForm.slug}
+                    onChange={(e) =>
+                      setNewTenantForm({
+                        ...newTenantForm,
+                        slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-[#121215] px-3 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] font-bold text-zinc-400">
+                    Ciudad *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Manta / Portoviejo / Quito"
+                    value={newTenantForm.city}
+                    onChange={(e) =>
+                      setNewTenantForm({ ...newTenantForm, city: e.target.value })
+                    }
+                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-[#121215] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-zinc-400">
+                    Teléfono WhatsApp *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="+593987654321"
+                    value={newTenantForm.phone}
+                    onChange={(e) =>
+                      setNewTenantForm({
+                        ...newTenantForm,
+                        phone: e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-[#121215] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-zinc-400">
+                  Dirección
+                </label>
+                <input
+                  type="text"
+                  placeholder="Calle principal y secundaria"
+                  value={newTenantForm.address}
+                  onChange={(e) =>
+                    setNewTenantForm({ ...newTenantForm, address: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-[#121215] px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-violet-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="mt-5 flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="rounded-xl border border-zinc-800 px-4 py-2 text-xs font-bold text-zinc-400 hover:text-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="rounded-xl bg-[#E11D48] px-5 py-2 text-xs font-black text-white hover:bg-[#BE123C]"
+                >
+                  {isPending ? "Registrando..." : "Crear Restaurante"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
