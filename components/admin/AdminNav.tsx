@@ -26,7 +26,7 @@ export interface AdminNavProps {
   allTenants?: TenantRow[];
 }
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { href: "/admin", label: "Pedidos", icon: LayoutDashboard },
   { href: "/admin/productos", label: "Menú y Extras", icon: Package },
   { href: "/admin/horarios", label: "Horarios", icon: Clock },
@@ -42,6 +42,18 @@ export function AdminNav({
   const pathname = usePathname();
   const router = useRouter();
   const [copiedMenuLink, setCopiedMenuLink] = useState(false);
+
+  const navItems = isSuperAdmin
+    ? [
+        ...BASE_NAV_ITEMS,
+        {
+          href: "/admin/sistema",
+          label: "Sistema & Soporte",
+          icon: ShieldCheck,
+          isDev: true,
+        },
+      ]
+    : BASE_NAV_ITEMS;
 
   const publicMenuUrl =
     typeof window !== "undefined"
@@ -76,16 +88,24 @@ export function AdminNav({
                 SUPERADMIN / EQUIPO DEV
               </span>
               <span className="hidden text-zinc-400 sm:inline">
-                Control Global de Plataforma ({allTenants.length} {allTenants.length === 1 ? "Restaurante" : "Restaurantes"})
+                Control Global de Plataforma ({allTenants.length}{" "}
+                {allTenants.length === 1 ? "Restaurante" : "Restaurantes"})
               </span>
             </div>
             <div className="flex items-center gap-2">
+              <Link
+                href="/admin/sistema"
+                className="inline-flex items-center gap-1 rounded-lg border border-violet-500/40 bg-violet-600 px-2.5 py-1 text-[11px] font-black text-white hover:bg-violet-500"
+              >
+                <ShieldCheck className="h-3 w-3" />
+                <span>Panel Superadmin</span>
+              </Link>
               <Link
                 href="/"
                 className="inline-flex items-center gap-1 rounded-lg border border-violet-500/40 bg-violet-900/30 px-2.5 py-1 text-[11px] font-bold text-violet-200 hover:bg-violet-900/50"
               >
                 <Store className="h-3 w-3" />
-                <span>Vista Clientes / Hub</span>
+                <span>Hub Clientes</span>
               </Link>
             </div>
           </div>
@@ -177,16 +197,25 @@ export function AdminNav({
       </div>
 
       <nav className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-4 pb-2 text-xs font-bold text-zinc-400">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
+          const isDev = "isDev" in item && item.isDev;
+
+          let activeClass = "bg-[#E11D48] text-white";
+          if (isDev) {
+            activeClass = "bg-violet-600 text-white shadow-sm shadow-violet-500/30";
+          }
+
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 transition-colors ${
                 isActive
-                  ? "bg-[#E11D48] text-white"
+                  ? activeClass
+                  : isDev
+                  ? "border border-violet-500/30 bg-violet-950/30 text-violet-300 hover:bg-violet-900/40 hover:text-violet-100"
                   : "hover:bg-zinc-800/60 hover:text-zinc-200"
               }`}
             >

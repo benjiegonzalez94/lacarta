@@ -56,7 +56,10 @@ export async function POST(request: Request, context: RouteContext) {
     let friendlyMessage =
       "No se pudo procesar tu pedido. Verifica los datos e intenta nuevamente.";
 
-    if (message.includes("PRODUCT_UNAVAILABLE")) {
+    if (message.includes("RESTAURANT_SUSPENDED")) {
+      friendlyMessage =
+        "El servicio de pedidos en este local está temporalmente pausado por administración.";
+    } else if (message.includes("PRODUCT_UNAVAILABLE")) {
       friendlyMessage =
         "Uno de los productos seleccionados ya no está disponible.";
     } else if (message.includes("TABLE_NOT_FOUND")) {

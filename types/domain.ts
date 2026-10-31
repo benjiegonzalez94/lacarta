@@ -185,3 +185,36 @@ export interface CustomerProfile {
     createdAt: string;
   }>;
 }
+
+
+export interface SuperadminMetrics {
+  totalTenants: number;
+  activeTenants: number;
+  suspendedTenants: number;
+  estimatedMrr: number;
+  totalOrders: number;
+  totalPlatformGmv: number;
+  ordersLast30Days: number;
+  totalProfiles: number;
+  customersCount: number;
+  sellersCount: number;
+  adminsCount: number;
+}
+
+export interface SuperadminTenant extends TenantRow {
+  ownerName?: string | null;
+  ownerPhone?: string | null;
+}
+
+export interface SuperadminGlobalOrder extends OrderRow {
+  tenantName: string;
+  tenantSlug: string;
+}
+
+export interface CustomerTrustInfo {
+  completedOrders: number;
+  noShowOrders: number;
+  cashAllowed: boolean;
+  maxCashRemote: number;
+  trustTier: "new" | "verified" | "restricted" | string;
+}

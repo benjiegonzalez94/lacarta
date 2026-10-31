@@ -44,6 +44,10 @@ export async function placePublicOrder(
     throw new Error("TENANT_NOT_FOUND");
   }
 
+  if (tenant.subscription_status === "suspended") {
+    throw new Error("RESTAURANT_SUSPENDED");
+  }
+
   const productIds = Array.from(new Set(input.items.map((i) => i.product_id)));
   const allOptionIds = Array.from(
     new Set(input.items.flatMap((i) => i.option_ids ?? []))

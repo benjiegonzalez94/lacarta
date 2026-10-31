@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Clock, MapPin, Navigation } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Navigation, ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { buildDirectionsUrl } from "@/lib/utils/location";
@@ -30,6 +30,8 @@ export function RestaurantHeader({
     longitude: tenant.longitude !== null ? Number(tenant.longitude) : null,
     googleMapsUrl: tenant.google_maps_url,
   });
+
+  const isSuspended = tenant.subscription_status === "suspended";
 
   return (
     <header className="relative overflow-hidden border-b border-zinc-800/80 bg-[#121215] pt-7 sm:pt-0">
@@ -79,9 +81,15 @@ export function RestaurantHeader({
                   {tenant.branch_name}
                 </span>
               ) : null}
-              <Badge variant={schedule.isOpen ? "success" : "secondary"}>
-                {schedule.statusLabel}
-              </Badge>
+              {isSuspended ? (
+                <span className="rounded-lg border border-red-500/40 bg-red-500/15 px-2.5 py-0.5 text-xs font-black text-red-300">
+                  SUSPENDIDO
+                </span>
+              ) : (
+                <Badge variant={schedule.isOpen ? "success" : "secondary"}>
+                  {schedule.statusLabel}
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-zinc-400">
               {branding.slogan} •{" "}
@@ -100,7 +108,17 @@ export function RestaurantHeader({
           </div>
         </div>
 
-        {!schedule.isOpen ? (
+        {isSuspended ? (
+          <div
+            role="status"
+            className="mt-3 flex items-center gap-2 rounded-xl border border-red-500/40 bg-red-500/15 px-3 py-2 text-xs font-bold text-red-200"
+          >
+            <ShieldAlert className="h-4 w-4 shrink-0 text-red-400" />
+            <span>
+              El servicio de pedidos en este local está pausado temporalmente por administración.
+            </span>
+          </div>
+        ) : !schedule.isOpen ? (
           <div
             role="status"
             className="mt-3 flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200"
