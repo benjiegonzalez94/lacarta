@@ -490,43 +490,6 @@ export function UnifiedAuthView({
             </span>
           </button>
         </form>
-
-        {/* Quick Demo Access for instant testing */}
-        {mode === "signin" ? (
-          <div className="mt-5 border-t border-zinc-800/80 pt-4">
-            <p className="mb-2 text-center text-[11px] font-semibold text-zinc-500">
-              Acceso rápido de demostración
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                id="demo-login-customer-btn"
-                type="button"
-                onClick={() => {
-                  setEmail("cliente@lacarta.ec");
-                  setPassword("Cliente2026!");
-                  setErrorMsg(null);
-                }}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-zinc-800 bg-[#121215] px-3 py-2 text-[11px] font-bold text-zinc-300 hover:border-[#E11D48]"
-              >
-                <User className="h-3.5 w-3.5 text-[#FB7185]" />
-                <span>Demo Cliente</span>
-              </button>
-              <button
-                id="demo-login-seller-btn"
-                type="button"
-                onClick={() => {
-                  setEmail("admin@cowiings.com");
-                  setPassword("Cowiings2026!");
-                  setErrorMsg(null);
-                }}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-zinc-800 bg-[#121215] px-3 py-2 text-[11px] font-bold text-zinc-300 hover:border-[#E11D48]"
-              >
-                <Store className="h-3.5 w-3.5 text-[#FB7185]" />
-                <span>Demo Vendedor</span>
-              </button>
-            </div>
-          </div>
-        ) : null}
       </div>
     </div>
   );
